@@ -21,7 +21,8 @@ The system uses:
 - [Setup Instructions](#setup-instructions)  
   - [Technologies Used](#technologies-used)  
   - [Backend Setup](#backend-setup)  
-  - [Frontend Setup](#frontend-setup)  
+  - [Frontend Setup](#frontend-setup)
+- [Key Feature](#key-feature)
 - [Usage](#usage)  
 - [How it Works](#how-it-works)  
 - [Notes](#notes)
@@ -119,6 +120,18 @@ The system uses:
    ```
 4. Open your browser at `http://localhost:3000`
 
+## Key Feature
+### Protocol Question Coverage Checker
+**Goal**: Given a 911 call transcript and a set of required protocol questions for a selected nature code, the system checks which questions were asked, which were missed, and a simple confidence score for each match using token-overlap
+
+### Example 
+* Transcript: "911 what's is the address of the emergency? Are there any injuries?"
+
+* Required:
+  * 1. "What is the address of the emergency?"
+    2. "Is anyone injured?"
+    3. "Are there you in a safe location?"
+* Output: `asked = [1,2]`, `missed = [3]`, `coverage = 0.67`
 
 ## Usage
 
