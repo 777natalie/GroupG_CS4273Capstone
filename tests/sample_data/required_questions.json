@@ -1,0 +1,10 @@
+{
+    "required": [
+      "What is the address of the emergency?",
+      "Is anyone injured?",
+      "What is your callback number?"
+    ],
+    "threshold": 0.6
+  }
+
+  
