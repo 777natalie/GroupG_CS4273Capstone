@@ -5,7 +5,9 @@
 
 ## Project Overview
 
-This project is a continuation of the Group E Capstone project, designed to assist emergency dispatchers by analyzing EMS call transcripts and verifying if protocol questions were asked correctly.
+This project supports the Norman Police Department by reviewing EMS call transcripts to ensure dispatchers ask the correct protocol questions. It can be used for quality assurance, training, and improving call consistency.
+
+The work builds on a previous Capstone project that used outside APIs, but our team moved to a fully local system to keep sensitive data secure and compliant. Transcripts are processed through a backend that checks them against dispatcher protocols, displaying the results on a simple web interface.
 
 The system uses:
 - A **local LLM (Ollama)** for natural language understanding and querying,
@@ -77,11 +79,14 @@ The system uses:
 
 ### Technologies Used
 
-- Python 3.9+  
-- Node.js 16+ and npm/yarn  
-- [Ollama](https://ollama.com) installed and configured locally  
-- Access to the EMS protocol CSV file (`EMS-Calltaking-QA.csv`)
+- Python 3.9+ – backend services and transcript processing
+- Node.js 16+ and npm/yarn – package management and frontend tooling
+- React – frontend web interface for uploading transcripts and viewing results
+- Ollama – local LLM for transcript analysis
+- FAISS – semantic search index for fast retrieval of protocol questions
+- FastAPI – backend framework for handling API requests
 
+EMS Protocol CSV file (EMS-Calltaking-QA.csv) – reference material for dispatcher protocols
 ---
 
 ### Backend Setup
