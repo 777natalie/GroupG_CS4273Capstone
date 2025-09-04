@@ -145,7 +145,7 @@ The system uses:
 | Name            | Role            | Contact                   |
 | --------------- | --------------- | ------------------------- |
 | Camden Laskie   | Project Manager | camdenlaskie@ou.edu       |
-| Kevin Nguyen    | Sprint Master 1 | idk                       |
+| Kevin Nguyen    | Sprint Master 1 | kevin.nguyen@ou.edu       |
 | Jaiden Sizemore | Sprint Master 2 | idk                       |
 | Natalie Roman   | Sprint Master 3 | casandra.n.roman-1@ou.edu |
 
