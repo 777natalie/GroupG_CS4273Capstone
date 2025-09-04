@@ -136,7 +136,7 @@ The system uses:
 
 ## Notes 
 
-* Ollama provides a HIPAA-friendly, local LLM inference environment — no cloud dependency.
+* Ollama provides a HIPAA-friendly, local LLM inference environment, no cloud dependency.
 * The semantic vector index improves retrieval performance and relevance.
 * This modular approach allows easy upgrades to the backend LLM or frontend UI independently.
   
