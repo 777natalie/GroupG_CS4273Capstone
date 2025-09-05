@@ -169,5 +169,21 @@ EMS Protocol CSV file (EMS-Calltaking-QA.csv) – reference material for dispatc
 
 ## Progress Plan
 
-To be Determined
+* September:
+** Have all members submit the proper documents for participation in the project.
+** Acquire grading guidelines.
+** Layout project structure in GitHub.
 
+* October:
+** Identify and develop best method of integrating AI into the grading process.
+** Build on frontend structure from previous groups.
+
+* November:
+** Polish and verify AI grading capabilities.
+** Add finishing touches to frontend (possibly working with group B by this point).
+** Attach group B's transcription project to our grading project.
+** Ensure there are no errors when combining the projects.
+
+* December:
+** Test final version, and fix any issues.
+** Present final product.
