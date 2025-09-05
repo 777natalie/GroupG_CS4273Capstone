@@ -176,7 +176,7 @@ EMS Protocol CSV file (EMS-Calltaking-QA.csv) – reference material for dispatc
 
 * October:
   * Identify and develop best method of integrating AI into the grading process.
-  * Build on frontend structure from previous groups.
+  * Build on frontend structure from previous group.
 
 * November:
   * Polish and verify AI grading capabilities.
