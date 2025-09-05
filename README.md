@@ -82,6 +82,7 @@ The system uses:
 - Python 3.9+ – backend services and transcript processing
 - Node.js 16+ and npm/yarn – package management and frontend tooling
 - React – frontend web interface for uploading transcripts and viewing results
+- Vite - react framework to handle page routing 
 - Ollama – local LLM for transcript analysis
 - FAISS – semantic search index for fast retrieval of protocol questions
 - FastAPI – backend framework for handling API requests
@@ -172,10 +173,12 @@ EMS Protocol CSV file (EMS-Calltaking-QA.csv) – reference material for dispatc
 * September:
   * Have all members submit the proper documents for participation in the project.
   * Acquire grading guidelines.
+  * Determine what needs to finished on frontend
   * Layout project structure in GitHub.
 
 * October:
   * Identify and develop best method of integrating AI into the grading process.
+  * Develop AI grading process and connect with group B to handle transcription and grading simoultaneously
   * Build on frontend structure from previous group.
 
 * November:
