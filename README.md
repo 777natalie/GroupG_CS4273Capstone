@@ -7,13 +7,9 @@
 
 This project supports the Norman Police Department by reviewing EMS call transcripts to ensure dispatchers ask the correct protocol questions. It can be used for quality assurance, training, and improving call consistency.
 
-The work builds on a previous Capstone project that used outside APIs, but our team moved to a fully local system to keep sensitive data secure and compliant. Transcripts are processed through a backend that checks them against dispatcher protocols, displaying the results on a simple web interface.
+We were provided with an Excel sheet containing the grading criteria that NPD currently uses, and our non-AI grading approach is based directly on those rules. Transcripts are parsed and checked against this grading sheet to produce consistent, repeatable scoring.
 
-The system uses:
-- A **local LLM (Ollama)** for natural language understanding and querying,
-- A **semantic search vector index** (FAISS) for fast protocol question retrieval,
-- A **FastAPI backend** to process transcripts,
-- A **React frontend** to upload transcripts and display analysis results.
+The focus for now is on a rule-based implementation to match dispatcher questions with required prompts. Once this foundation is stable, AI-based grading will be layered on in a later sprint.
 
 ---
 
@@ -35,42 +31,29 @@ The system uses:
 
 ## Project Structure
    ```bash
-/project-root
+/CallAnalysisTool
 │
-├── backend/                       # Backend API and analysis logic (Python)
-│   ├── data/                     # Data and index storage
-│   │   ├── EMS-Calltaking-QA.csv  # EMS Protocol CSV file with questions and protocols
-│   │   └── db_indexing/           # FAISS vector index files (persisted search index)
-│   │       ├── default_vector_store.json
-│   │       ├── docstore.json
-│   │       ├── graph_store.json
-│   │       ├── image_vector_store.json
-│   │       └── index_store.json
+├── backend/                       # Backend API and grading logic (Python)
+│   ├── data/                     
+│   │   └── EMS-Calltaking-QA.csv  # EMS protocol questions
 │   │
-│   ├── schema/                   # Pydantic models for structured API responses
-│   │   └── models.py             # Defines the data schema for NatureCode and Questions in analysis
+│   ├── schema/                   # Models for API responses
+│   │   └── models.py
 │   │
-│   ├── EMS_CallAnalyzer.py       # Main analyzer class: Loads data, indexes it, queries FAISS, and calls LLM
-│   ├── local_llm.py              # Wrapper to run Ollama local LLM model via CLI calls
-│   ├── api.py                   # FastAPI app with endpoints to accept transcript and return analysis
-│   └── requirements.txt          # Python dependencies list for the backend
+│   ├── EMS_CallAnalyzer.py       # Rule-based transcript analyzer
+│   ├── api.py                    # FastAPI app with /analyze endpoint
+│   └── requirements.txt          # Backend dependencies
 │
 └── frontend/                     # React frontend UI
-    ├── public/
-    │   └── index.html            # Main HTML page hosting the React app
-    │
     ├── src/
-    │   ├── components/           # React components for UI
-    │   │   ├── TranscriptUploader.jsx  # Uploads transcript files, submits to backend
-    │   │   └── AnalysisResult.jsx       # Displays the analysis results returned from backend
-    │   │
-    │   ├── App.jsx               # Main React app component that renders uploader and result
-    │   ├── index.js              # Entry point for React app, renders App to DOM
-    │   └── api.js                # API helper for calling backend /analyze endpoint
-    │
-    ├── package.json              # Node package config with dependencies and scripts
-    ├── package-lock.json         # Dependency lockfile
-    └── README.md                 # Frontend README
+    │   ├── components/
+    │   │   ├── TranscriptUploader.jsx  # Upload transcripts
+    │   │   └── AnalysisResult.jsx      # Display grading results
+    │   ├── App.jsx
+    │   ├── index.js
+    │   └── api.js                # API helper
+    └── package.json
+
 
 ```
 
@@ -79,15 +62,14 @@ The system uses:
 
 ### Technologies Used
 
-- Python 3.9+ – backend services and transcript processing
-- Node.js 16+ and npm/yarn – package management and frontend tooling
-- React – frontend web interface for uploading transcripts and viewing results
-- Vite - react framework to handle page routing 
-- Ollama – local LLM for transcript analysis
-- FAISS – semantic search index for fast retrieval of protocol questions
-- FastAPI – backend framework for handling API requests
+* `Python 3.9+` – backend services and transcript processing
+* `Node.js 16+` and npm/yarn – frontend tooling
+* `React` – frontend web interface
+* `Vite` – React framework for routing
+* `FastAPI` – backend framework for API handling
+* `CSV protocols` – EMS protocol data reference
+* `EMS Protocol CSV file (Police-Fire-EMS-Calltaking-QA-Forms)` – reference material for dispatcher protocols
 
-EMS Protocol CSV file (EMS-Calltaking-QA.csv) – reference material for dispatcher protocols
 ---
 
 ### Backend Setup
@@ -103,7 +85,6 @@ EMS Protocol CSV file (EMS-Calltaking-QA.csv) – reference material for dispatc
 3. Install Python dependencies:
    ```bash
    pip install -r requirements.txt  
-4. Make sure Ollama is installed and configured, then set your model in `local_llm.py`.
 5. Run the FastAPI server:
    ```bash
    uvicorn api:app --reload
@@ -141,23 +122,24 @@ EMS Protocol CSV file (EMS-Calltaking-QA.csv) – reference material for dispatc
 
 ## Usage
 
-1. Use the React frontend to upload EMS call transcripts.
-2. The frontend sends transcripts to the backend API /analyze.
-3. Backend queries the EMS protocol vector index and runs Ollama LLM locally for analysis.
-4. Analysis results are returned and displayed on the frontend UI.
+1. Upload EMS call transcripts through the React frontend.
+2. Transcripts are sent to the backend API.
+3. The backend compares transcripts against the EMS protocol CSV.
+4. Results are returned and displayed on the frontend.
 
 ## How it Works
 
-* EMS protocol data (CSV) is loaded and indexed with FAISS for semantic search.
-* Transcripts are parsed and queried against this index for relevant questions.
-* A local LLM (Ollama) processes the transcript and indexed data to determine protocol adherence.
-* Responses follow the structured schema defined in models.py for consistent frontend display.
+* The Excel grading sheet provided by NPD is loaded as the reference for grading criteria.
+* Each transcript is parsed line by line and compared against the required questions from the sheet.
+* A matching algorithm (keyword/token overlap) determines which protocol questions were asked, which were missed, and assigns points based on the NPD rubric.
+* Results are packaged into a structured API response (via models.py) and returned to the frontend for display.
 
 ## Notes 
-
-* Ollama provides a HIPAA-friendly, local LLM inference environment, no cloud dependency.
-* The semantic vector index improves retrieval performance and relevance.
-* This modular approach allows easy upgrades to the backend LLM or frontend UI independently.
+### Future AI Integration
+- Once the non-AI version is stable, the team plans to add:
+    - A basic AI grading module to test against Norman PD demo data.
+    - More advanced natural language techniques for transcript understanding.
+    - Secure, on-premise deployment to maintain data privacy.
   
 ## Team Contributions
 
