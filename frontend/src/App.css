@@ -1,0 +1,20 @@
+/* App.css */
+.app-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-container {
+  display: flex;
+  flex-grow: 1;
+  width: 100vw;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.content-container {
+  margin-left: 250px; /* Sidebar width */
+  margin-top: 60px; /* Navbar height */
+  padding: 20px;
+  width: calc(100% - 250px); /* Adjust width */
+}
