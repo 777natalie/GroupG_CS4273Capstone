@@ -2,7 +2,7 @@
 # CS4273 Group G
 # Last Updated 9/27/2025
 
-# Usage: python JsonTranscription.py <filename.json>
+# Usage: python JSONTranscriptionParser.py <filename.json>
 
 import json
 import sys
@@ -64,8 +64,8 @@ def json_to_text(file_path):
 def main():
     # Check if a filename was provided as argument
     if len(sys.argv) != 2:
-        print("Usage: python JsonTranscription.py <filename.json>")
-        print("Example: python JsonTranscription.py transcriptions/example.json")
+        print("Usage: python JSONTranscriptionParser.py <filename.json>")
+        print("Example: python JSONTranscriptionParser.py transcriptions/example.json")
         sys.exit(1)
     
     # Store inputted file name
