@@ -79,13 +79,9 @@ def main():
     # Put file through parser and store output in result
     result = json_to_text(filename)
     
-    # Print the result
-    if result:
-        print(result)
-    else:
-        # Parsing failed and result is an empty string
-        print("No transcription data found or error occurred.")
-        sys.exit(1)
+    return result
 
 if __name__ == "__main__":
-    main()
+    result = main()
+    if result: 
+        print(result)
