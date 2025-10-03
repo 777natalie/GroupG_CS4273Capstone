@@ -19,7 +19,7 @@ KEY = {
 }
 
 # Parse through txt transcript lines using a regular expression
-# [mm:ss.s–mm:ss.s] SPEAKER_XX: text
+# Recognizes: [mm:ss.s–mm:ss.s] SPEAKER_XX: text
 LINE_RE = re.compile(
     r"^\[(\d{2}):(\d{2}\.\d)\s*[\u2013\-]\s*(\d{2}):(\d{2}\.\d)\]\s+(SPEAKER_\d{2}):\s*(.*)$"
 )
@@ -75,7 +75,7 @@ def code_from(exact: bool, loose: bool) -> str:
 def grade_from_txt(txt_path: str) -> Dict[str, Dict[str,str]]:
     segs = load_segments(Path(txt_path))
 
-    # --- Q1: "What's the location of the emergency?"
+    # --- Case Entry Q1: "What's the location of the emergency?"
     q1_exact = said_exact_by_dispatcher(segs, "What's the location of the emergency?")
     q1_loose = (
         said_contains_all_by_dispatcher(segs, "location", "emergency")
@@ -84,7 +84,8 @@ def grade_from_txt(txt_path: str) -> Dict[str, Dict[str,str]]:
     )
     code_1 = code_from(q1_exact, q1_loose)
 
-    # --- 1a: Was the address/location confirmed/verified?
+    # --- Case Entry 1a: Was the address/location confirmed/verified?
+    # Check's if the caller mentions a street name or a city/state combo
     # Hard coded for now to recognize "Norman, Oklahoma" or a spelled-out street name
     spell_re = re.compile(r"\b([a-z])(?:\s*[-\s]\s*[a-z]){2,}\b", re.I)
     city_state_re = re.compile(r"\b(norman|oklahoma|ok)\b", re.I)
@@ -99,11 +100,11 @@ def grade_from_txt(txt_path: str) -> Dict[str, Dict[str,str]]:
             break
     code_1a = "1" if verified else "2"
 
-    # --- 1b: Was the 911 CAD Dump used to build the call?
+    # --- Case Entry 1b: Was the 911 CAD Dump used to build the call?
     # Concern: Not detectable from transcript text → mark as Not Asked (2).
     code_1b = "2"
 
-    # --- Q2: "What's the phone number you're calling from?"
+    # --- Case Entry Q2: "What's the phone number you're calling from?"
     q2_exact = (
         said_exact_by_dispatcher(segs, "What’s the phone number you’re calling from?")
         or said_exact_by_dispatcher(segs, "What's the phone number you're calling from?")
@@ -116,7 +117,7 @@ def grade_from_txt(txt_path: str) -> Dict[str, Dict[str,str]]:
     )
     code_2 = code_from(q2_exact, q2_loose)
 
-    # --- 2a: Was the phone number documented in the entry?
+    # --- Case Entry 2a: Was the phone number documented in the entry?
     # Concern: Also not provable from transcript text → Not Asked (2).
     code_2a = "2"
 
