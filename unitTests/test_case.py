@@ -7,15 +7,18 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 # Mapping of grading codes to their meanings (from QA sheet)
+# Only codes 1,2,4 are used here; 3, 5, 6, and RC are for other contexts.
 KEY = {
     "1": "Asked Correctly",
     "2": "Not Asked",
     "3": "Asked Incorrectly",
     "4": "Not As Scripted",
-    "5": "N/A"
+    "5": "N/A",
+    "6": "Obvious",
+    "RC": "Recorded Correctly"
 }
 
-# Regex pattern to parse transcript lines in the format:
+# Parse through txt transcript lines using a regular expression
 # [mm:ss.s–mm:ss.s] SPEAKER_XX: text
 LINE_RE = re.compile(
     r"^\[(\d{2}):(\d{2}\.\d)\s*[\u2013\-]\s*(\d{2}):(\d{2}\.\d)\]\s+(SPEAKER_\d{2}):\s*(.*)$"
