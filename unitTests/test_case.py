@@ -24,11 +24,9 @@ LINE_RE = re.compile(
     r"^\[(\d{2}):(\d{2}\.\d)\s*[\u2013\-]\s*(\d{2}):(\d{2}\.\d)\]\s+(SPEAKER_\d{2}):\s*(.*)$"
 )
 
+# Load the transcript TXT file and parse it into segments
+# Each segment is a dict with start, end, speaker, text
 def load_segments(txt_path: Path) -> List[Dict[str, Any]]:
-    """
-    Load the transcript TXT file and return a list of segments.
-    Each segment has: start time, end time, speaker, and text.
-    """
     segs = []
     for line in txt_path.read_text(encoding="utf-8").splitlines():
         m = LINE_RE.match(line)
@@ -40,34 +38,23 @@ def load_segments(txt_path: Path) -> List[Dict[str, Any]]:
         segs.append({"start": start, "end": end, "speaker": spk, "text": text})
     return segs
 
+# Normalize strings for matching: lowercase, strip punctuation, collapse spaces
 def norm(s: str) -> str:
-    """
-    Normalize a string for easier matching:
-    - lowercase
-    - strip punctuation
-    - collapse extra spaces
-    """
     s = s.lower()
     s = re.sub(r"[^\w\s?]", "", s)
     s = re.sub(r"\s+", " ", s).strip()
     return s
 
+# Return 'True' if dispatcher (SPEAKER_01) said exactly the target line after normalization
 def said_exact_by_dispatcher(segments, target: str) -> bool:
-    """
-    Return True if dispatcher (SPEAKER_01) said exactly the target line
-    after normalization.
-    """
     tnorm = norm(target)
     return any(
         seg["speaker"] == "SPEAKER_01" and norm(seg["text"]) == tnorm
         for seg in segments
     )
 
+# Return 'True' if dispatcher said a line containing ALL given keywords
 def said_contains_all_by_dispatcher(segments, *kws: str) -> bool:
-    """
-    Return True if dispatcher said a line containing ALL given keywords.
-    This is used to detect "Not As Scripted" synonyms.
-    """
     kws = [norm(k) for k in kws]
     for seg in segments:
         if seg["speaker"] != "SPEAKER_01":
@@ -77,22 +64,15 @@ def said_contains_all_by_dispatcher(segments, *kws: str) -> bool:
             return True
     return False
 
+# Convert detection flags to the grade code
 def code_from(exact: bool, loose: bool) -> str:
-    """
-    Convert detection flags to a grade code.
-    - exact → 1 (Asked Correctly)
-    - loose → 4 (Not As Scripted)
-    - neither → 2 (Not Asked)
-    """
     if exact: return "1"
     if loose: return "4"
     return "2"
 
+# Main grading function #
+# Reads transcript, applies grading rules, and returns results for questions 1–2a
 def grade_from_txt(txt_path: str) -> Dict[str, Dict[str,str]]:
-    """
-    Main grading function. Reads transcript, applies grading rules,
-    and returns a dictionary of results for questions 1–2a.
-    """
     segs = load_segments(Path(txt_path))
 
     # --- Q1: "What's the location of the emergency?"
@@ -105,8 +85,7 @@ def grade_from_txt(txt_path: str) -> Dict[str, Dict[str,str]]:
     code_1 = code_from(q1_exact, q1_loose)
 
     # --- 1a: Was the address/location confirmed/verified?
-    # Heuristic: caller spells out letters (B-R-O-M-P-T-O-N) OR
-    # gives number + city/state (like "Norman, Oklahoma").
+    # Hard coded for now to recognize "Norman, Oklahoma" or a spelled-out street name
     spell_re = re.compile(r"\b([a-z])(?:\s*[-\s]\s*[a-z]){2,}\b", re.I)
     city_state_re = re.compile(r"\b(norman|oklahoma|ok)\b", re.I)
     number_re = re.compile(r"\b\d{1,5}\b")
@@ -121,7 +100,7 @@ def grade_from_txt(txt_path: str) -> Dict[str, Dict[str,str]]:
     code_1a = "1" if verified else "2"
 
     # --- 1b: Was the 911 CAD Dump used to build the call?
-    # Not detectable from transcript text → mark as Not Asked (2).
+    # Concern: Not detectable from transcript text → mark as Not Asked (2).
     code_1b = "2"
 
     # --- Q2: "What's the phone number you're calling from?"
@@ -138,10 +117,10 @@ def grade_from_txt(txt_path: str) -> Dict[str, Dict[str,str]]:
     code_2 = code_from(q2_exact, q2_loose)
 
     # --- 2a: Was the phone number documented in the entry?
-    # Also not provable from transcript text → Not Asked (2).
+    # Concern: Also not provable from transcript text → Not Asked (2).
     code_2a = "2"
 
-    # Human-readable labels for each item
+    # Labels for each item
     labels = {
         "1": "What's the location of the emergency?",
         "1a": "Address/location confirmed/verified?",
