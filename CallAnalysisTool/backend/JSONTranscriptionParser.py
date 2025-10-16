@@ -1,6 +1,6 @@
 # Jaiden Sizemore
 # CS4273 Group G
-# Last Updated 9/27/2025
+# Last Updated 10/16/2025
 
 # Usage: python JSONTranscriptionParser.py <filename.json>
 
@@ -53,8 +53,8 @@ def json_to_text(file_path):
             end_minutes = int(end_time // 60)
             end_seconds = end_time % 60
 
-            start_timestamp = f"{start_minutes:02d}:{start_seconds:05.1f}"
-            end_timestamp = f"{end_minutes:02d}:{end_seconds:05.1f}"
+            start_timestamp = f"{start_minutes:02d}:{start_seconds:04.1f}"
+            end_timestamp = f"{end_minutes:02d}:{end_seconds:04.1f}"
             
             # Add the entry to the text output and move to the next line
             text_output += f"[{start_timestamp}–{end_timestamp}] {speaker}: {transcript_text}\n"
