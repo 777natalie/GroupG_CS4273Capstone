@@ -41,18 +41,23 @@ def json_to_text(file_path):
         # For each message entry...
         for segment in data['segments']:
             # Extract the required fields
-            start_time = segment.get('start', 0.0)              # Get Timestamp component, "0.0" if missing
+            start_time = segment.get('start', 0.0)              # Get Starting Timestamp component, "0.0" if missing
+            end_time = segment.get('end', 0.0)                  # Get Ending Timestamp component, "0.0" if missing
             speaker = segment.get('speaker', 'UNKNOWN')         # Get Speaker component, "UNKNOWN" if missing
             transcript_text = segment.get('text', '').strip()   # Get Text component, empty string if missing
             
             # Format the line: "[Timestamp][Speaker]: Text"
             # Convert seconds to MM:SS format
-            minutes = int(start_time // 60)
-            seconds = int(start_time % 60)
-            timestamp = f"{minutes:02d}:{seconds:02d}"
+            start_minutes = int(start_time // 60)
+            start_seconds = start_time % 60
+            end_minutes = int(end_time // 60)
+            end_seconds = end_time % 60
+
+            start_timestamp = f"{start_minutes:02d}:{start_seconds:05.1f}"
+            end_timestamp = f"{end_minutes:02d}:{end_seconds:05.1f}"
             
             # Add the entry to the text output and move to the next line
-            text_output += f"[{timestamp}][{speaker}]: {transcript_text}\n"
+            text_output += f"[{start_timestamp}–{end_timestamp}] {speaker}: {transcript_text}\n"
     else:
         # Incorrect structure
         print("Error: JSON file does not contain 'segments' array or has unexpected structure.")
