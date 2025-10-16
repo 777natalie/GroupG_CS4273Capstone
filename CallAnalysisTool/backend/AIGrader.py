@@ -4,6 +4,11 @@
 
 # Still very work in progress, functionality is limited and only for first 5 questions.
 
+# Requires installation of ollama from ollama.ai
+# Ensure ollama is on your PATH
+# Download the model we are using: ollama pull llama3.1:8b
+# Run the model as follows: python AIGrader.py <path\transcript.json>
+
 import sys
 from JSONTranscriptionParser import json_to_text
 import ollama
