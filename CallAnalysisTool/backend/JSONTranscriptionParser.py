@@ -1,8 +1,8 @@
 # Jaiden Sizemore
 # CS4273 Group G
-# Last Updated 9/27/2025
+# Last Updated 10/16/2025: Adjusted timestamp format
 
-# Usage: python JSONTranscriptionParser.py <filename.json>
+# Usage: python JSONTranscriptionParser.py <filepath.json>
 
 import json
 import sys
@@ -46,15 +46,15 @@ def json_to_text(file_path):
             speaker = segment.get('speaker', 'UNKNOWN')         # Get Speaker component, "UNKNOWN" if missing
             transcript_text = segment.get('text', '').strip()   # Get Text component, empty string if missing
             
-            # Format the line: "[Timestamp][Speaker]: Text"
+            # Format the line: "[Starting timestamp - Ending timestamp][Speaker]: Text"
             # Convert seconds to MM:SS format
             start_minutes = int(start_time // 60)
             start_seconds = start_time % 60
             end_minutes = int(end_time // 60)
             end_seconds = end_time % 60
 
-            start_timestamp = f"{start_minutes:02d}:{start_seconds:05.1f}"
-            end_timestamp = f"{end_minutes:02d}:{end_seconds:05.1f}"
+            start_timestamp = f"{start_minutes:02d}:{start_seconds:04.1f}"
+            end_timestamp = f"{end_minutes:02d}:{end_seconds:04.1f}"
             
             # Add the entry to the text output and move to the next line
             text_output += f"[{start_timestamp}–{end_timestamp}] {speaker}: {transcript_text}\n"
@@ -66,10 +66,11 @@ def json_to_text(file_path):
     # Return fully parsed transcript as a string
     return text_output
 
+# Main method
 def main():
-    # Check if a filename was provided as argument
+    # Check if a file was provided as argument
     if len(sys.argv) != 2:
-        print("Usage: python JSONTranscriptionParser.py <filename.json>")
+        print("Usage: python JSONTranscriptionParser.py <filepath.json>")
         print("Example: python JSONTranscriptionParser.py transcriptions/example.json")
         sys.exit(1)
     
@@ -87,6 +88,7 @@ def main():
     return result
 
 if __name__ == "__main__":
+    # Quick way to check output
     result = main()
     if result: 
         print(result)
