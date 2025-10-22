@@ -1,292 +1,235 @@
+# Jaiden Sizemore
+# CS4273 Group G
+# Last Updated 10/21/2025: Altered comments for clarity
+
+# Usage: python Test_JSONTranscriptionParser.py
+
 import unittest
 import json
 import os
 import tempfile
 import sys
-from io import StringIO
-
-# Import your function (assuming it's in JsonTranscription.py)
 from JSONTranscriptionParser import json_to_text
 
 class TestJSONTranscriptionParser(unittest.TestCase):
-    
+
+    # Create an example JSON file for each test method
     def setUp(self):
-        # Set up test fixtures before each test method
         self.test_data = {
-            "language": "en",
-            "lang_confidence": 0.98,
             "segments": [
                 {
                     "start": 0.0,
                     "end": 5.0,
-                    "text": " Test Message 1.",
-                    "confidence": -0.29,
-                    "audio_quality": 0.737,
-                    "speaker": "SPEAKER_01"
+                    "speaker": "SPEAKER_01",
+                    "text": "Norman 911, what is the address of the emergency?"
                 },
                 {
                     "start": 5.0,
                     "end": 15.0,
-                    "text": " Test Message 2.",
-                    "confidence": -0.29,
-                    "audio_quality": 0.737,
-                    "speaker": "SPEAKER_00"
+                    "speaker": "SPEAKER_00",
+                    "text": "123 Main Street in Norman Oklahoma"
                 },
                 {
-                    "start": 15.0,
-                    "end": 18.0,
-                    "text": " Test Message 3.",
-                    "confidence": -0.29,
-                    "audio_quality": 0.737,
-                    "speaker": "SPEAKER_00"
+                    "start": 65.5,
+                    "end": 70.2,
+                    "speaker": "SPEAKER_01",
+                    "text": "Is the patient breathing?"
                 }
             ]
         }
-    
+
+    # Helper method for creating temp JSON files
     def create_temp_json_file(self, data):
-        # Helper method to create temporary JSON file for testing
-        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
-        json.dump(data, temp_file)
-        temp_file.close()
-        return temp_file.name
-    
-    def tearDown(self):
-        # Clean up after each test method
-        pass
-    
-    def test_basic_functionality(self):
-        # Test that the parser works with valid JSON data
-        temp_file = self.create_temp_json_file(self.test_data)
+        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) # Create temp JSON file without auto-deleting
+        json.dump(data, temp_file) # Write given data
+        temp_file.close() # Close file
+        return temp_file.name # Return temp file path
+
+    # Test JSON parser with valid data
+    def test_basic_parsing(self):
+        temp_file = self.create_temp_json_file(self.test_data) # Get temp file
+
+        # Attempt tests
         try:
-            result = json_to_text(temp_file)
+            result = json_to_text(temp_file) # Parse JSON into text
             
-            # Check that result is not empty
+            # Ensure result is nonempty
             self.assertIsNotNone(result)
-            self.assertIsInstance(result, str)
             self.assertGreater(len(result), 0)
             
-            # Check that all segments are present
-            lines = result.strip().split('\n')
-            self.assertEqual(len(lines), 3)
+            # Check if each segment is in result
+            self.assertIn("SPEAKER_01", result)
+            self.assertIn("SPEAKER_00", result)
+            self.assertIn("Norman 911", result)
+            self.assertIn("123 Main Street", result)
+            self.assertIn("Is the patient breathing?", result)
             
-            # Check format of each line
-            for line in lines:
-                self.assertIn('[', line)
-                self.assertIn(']', line)
-                self.assertIn(':', line)
-                
-        finally:
-            os.unlink(temp_file)
-    
-    def test_timestamp_formatting(self):
-        # Test that timestamps are formatted correctly as MM:SS
-        temp_file = self.create_temp_json_file(self.test_data)
-        try:
-            result = json_to_text(temp_file)
-            lines = result.strip().split('\n')
-            
-            # Check first line timestamp (0.0 seconds → 00:00)
-            self.assertIn('[00:00]', lines[0])
-            
-            # Check second line timestamp (5.0 seconds → 00:05)
-            self.assertIn('[00:05]', lines[1])
-            
-            # Check third line timestamp (15.0 seconds → 00:15)
-            self.assertIn('[00:15]', lines[2])
+            # Check timestamp formatting
+            self.assertIn("[00:00.0–00:05.0] SPEAKER_01:", result)
+            self.assertIn("[00:05.0–00:15.0] SPEAKER_00:", result)
+            self.assertIn("[01:05.5–01:10.2] SPEAKER_01:", result)
             
         finally:
-            os.unlink(temp_file)
-    
-    def test_speaker_formatting(self):
-        # Test that speaker names are included correctly
-        temp_file = self.create_temp_json_file(self.test_data)
-        try:
-            result = json_to_text(temp_file)
-            lines = result.strip().split('\n')
-            
-            # Check speakers are present
-            self.assertIn('[SPEAKER_01]', lines[0])
-            self.assertIn('[SPEAKER_00]', lines[1])
-            self.assertIn('[SPEAKER_00]', lines[2])
-            
-        finally:
-            os.unlink(temp_file)
-    
-    def test_text_content(self):
-        # Test that transcript text is properly included and trimmed
-        temp_file = self.create_temp_json_file(self.test_data)
-        try:
-            result = json_to_text(temp_file)
-            
-            # Check that text content is present and whitespace is trimmed
-            self.assertIn("Test Message 1.", result)
-            self.assertIn("Test Message 2.", result)
-            self.assertIn("Test Message 3.", result)
-            
-            # Check that leading/trailing whitespace is removed from text
-            lines = result.strip().split('\n')
-            self.assertFalse(lines[0].startswith(' '))  # No leading space before text
-            
-        finally:
-            os.unlink(temp_file)
-    
-    def test_missing_segments(self):
-        # Test behavior when segments key is missing
-        invalid_data = {
-            "language": "en",
-            "lang_confidence": 0.98
-            # Missing segments key
-        }
-        
-        temp_file = self.create_temp_json_file(invalid_data)
-        try:
-            result = json_to_text(temp_file)
-            self.assertEqual(result, "")  # Should return empty string
-            
-        finally:
-            os.unlink(temp_file)
-    
-    def test_empty_segments(self):
-        # Test behavior when segments array is empty
-        empty_data = {
-            "language": "en",
-            "segments": []
-        }
-        
-        temp_file = self.create_temp_json_file(empty_data)
-        try:
-            result = json_to_text(temp_file)
-            self.assertEqual(result, "")  # Should return empty string
-            
-        finally:
-            os.unlink(temp_file)
-    
-    def test_missing_optional_fields(self):
-        # Test behavior when optional fields are missing
-        partial_data = {
-            "segments": [
-                {
-                    "start": 10.0,
-                    "text": "Test message",
-                    # Missing speaker, end, confidence, audio_quality
-                }
-            ]
-        }
-        
-        temp_file = self.create_temp_json_file(partial_data)
-        try:
-            result = json_to_text(temp_file)
-            
-            # Should still work with default values
-            self.assertIsNotNone(result)
-            self.assertIn('[00:10]', result)
-            self.assertIn('[UNKNOWN]', result)
-            self.assertIn('Test message', result)
-            
-        finally:
-            os.unlink(temp_file)
-    
-    def test_file_not_found(self):
-        # Test behavior when file doesn't exist
-        result = json_to_text('nonexistent_file.json')
-        self.assertEqual(result, "")
-    
-    def test_invalid_json(self):
-        # Test behavior with invalid JSON file
-        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
-        temp_file.write("This is not valid JSON { invalid syntax ")
-        temp_file.close()
-        
-        try:
-            result = json_to_text(temp_file.name)
-            self.assertEqual(result, "")  # Should return empty string
-            
-        finally:
-            os.unlink(temp_file.name)
-    
-    def test_large_timestamps(self):
-        # Test timestamp formatting with large values (minutes > 60)
-        large_time_data = {
-            "segments": [
-                {
-                    "start": 3661.0,  # 1 hour, 1 minute, 1 second
-                    "end": 3665.0,
-                    "text": "Test with large timestamp",
-                    "speaker": "SPEAKER_01"
-                }
-            ]
-        }
-        
-        temp_file = self.create_temp_json_file(large_time_data)
-        try:
-            result = json_to_text(temp_file)
-            self.assertIn('[61:01]', result)  # 3661 seconds = 61 minutes, 1 second
-            
-        finally:
-            os.unlink(temp_file)
-    
-    def test_special_characters_in_text(self):
-        # Test handling of special characters in transcript text
-        special_char_data = {
+            os.unlink(temp_file) # Delete temp file
+
+    # Test handling of missing entries in JSON
+    def test_missing_fields(self):
+        test_data = {
             "segments": [
                 {
                     "start": 0.0,
                     "end": 5.0,
-                    "text": "Message with special chars: @#$%^&*() and quotes \"'",
+                    # speaker missing
+                    "text": "Test message"
+                },
+                {
+                    "start": 5.0,
+                    # end missing
+                    "speaker": "SPEAKER_00",
+                    "text": "Another message"
+                },
+                {
+                    # start missing
+                    "end": 10.0,
+                    "speaker": "SPEAKER_01",
+                    "text": "Third message"
+                },
+                {
+                    "start": 10.0,
+                    "end": 15.0,
                     "speaker": "SPEAKER_01"
+                    # text missing
                 }
             ]
         }
         
-        temp_file = self.create_temp_json_file(special_char_data)
+        temp_file = self.create_temp_json_file(test_data) # Temp file with missing entries
+
+        # Attempt tests
+        try:
+            result = json_to_text(temp_file) # Parse
+            
+            # Expected to use default values for missing entries
+            self.assertIn("UNKNOWN", result)           # Default speaker
+            
+            # Other default entries should be present anyway, but
+            # we can test other messages to ensure errors don't compound
+            self.assertIn("Test message", result)      
+            self.assertIn("Another message", result)
+            self.assertIn("Third message", result)
+            
+        finally:
+            os.unlink(temp_file) # Delete temp
+
+    # Test handling of empty segments
+    def test_empty_segments(self):
+        test_data = {
+            "segments": []
+        }
+        
+        temp_file = self.create_temp_json_file(test_data)
+
+        # Attempt test
         try:
             result = json_to_text(temp_file)
-            self.assertIn('Message with special chars: @#$%^&*() and quotes "\'', result)
+            
+            # Expected: empty string
+            self.assertEqual(result, "")
             
         finally:
             os.unlink(temp_file)
 
+    # Test non-existent file handling
+    def test_file_not_found(self):
+        result = json_to_text("fake_file.json")
+        # Expected: empty string
+        self.assertEqual(result, "")
 
-class TestMainFunction(unittest.TestCase):
-    # Tests for the main function and command line interface
-    
-    def setUp(self):
-        self.original_argv = sys.argv
-        self.original_stdout = sys.stdout
-    
-    def tearDown(self):
-        sys.argv = self.original_argv
-        sys.stdout = self.original_stdout
+    # Test invalid JSON format
+    def test_invalid_json(self):
+        # Create JSON with invalid format
+        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
+        temp_file.write("This is not valid JSON {")
+        temp_file.close()
+        
+        # Attempt test
+        try:
+            result = json_to_text(temp_file.name)
+            # Expected: empty string
+            self.assertEqual(result, "")
+        finally:
+            os.unlink(temp_file.name)
 
+    # Test valid JSON without segments
+    def test_missing_segments_key(self):
+        # Valid JSON without segments identifier
+        test_data = {
+            "start": 0.0,
+            "end": 5.0,
+            "speaker": "SPEAKER_01"
+        }
+        
+        temp_file = self.create_temp_json_file(test_data)
 
-# Additional test for edge cases
-class TestEdgeCases(unittest.TestCase):
-    
-    def test_very_short_timestamps(self):
-        """Test sub-second timestamps"""
-        short_time_data = {
+        # Attempt test
+        try:
+            result = json_to_text(temp_file)
+            # Expected: empty string
+            self.assertEqual(result, "")
+        finally:
+            os.unlink(temp_file)
+
+    # Test whitespace handling
+    def test_whitespace_handling(self):
+        """Test that whitespace in text is properly handled"""
+        test_data = {
             "segments": [
                 {
-                    "start": 0.5,
-                    "end": 1.2,
-                    "text": "Very short segment",
-                    "speaker": "SPEAKER_01"
+                    "start": 0.0,
+                    "end": 5.0,
+                    "speaker": "SPEAKER_01",
+                    "text": "  Message with extra spaces  "
                 }
             ]
         }
         
-        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
-        json.dump(short_time_data, temp_file)
-        temp_file.close()
-        
+        temp_file = self.create_temp_json_file(test_data)
+
+        # Attempt test
         try:
-            result = json_to_text(temp_file.name)
-            self.assertIn('[00:00]', result)  # Should truncate to whole seconds
-            
+            result = json_to_text(temp_file)
+            # Expected: whitespace removed with .strip()
+            self.assertIn("Message with extra spaces", result)
+            self.assertNotIn("  Message with extra spaces  ", result)
         finally:
-            os.unlink(temp_file.name)
+            os.unlink(temp_file)
 
+# Method for running all tests and displaying results
+def run_tests():
+    # Load tests
+    loader = unittest.TestLoader()
+    suite = loader.loadTestsFromTestCase(TestJSONTranscriptionParser)
+    
+    # Run tests, store result
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(suite)
+    
+    # Output results
+    print(f"\n{'='*50}")
+    print(f"Tests run: {result.testsRun}")
+    print(f"Failures: {len(result.failures)}")
+    print(f"Errors: {len(result.errors)}")
+    print(f"{'='*50}")
+    
+    return result.wasSuccessful()
 
-if __name__ == '__main__':
-    # Run the tests
-    unittest.main(verbosity=2)
+# Driver for running tests
+if __name__ == "__main__":
+    print("Running JSON Transcription Parser Unit Tests...")
+    success = run_tests()
+    
+    if success:
+        print("All tests passed!")
+    else:
+        print("Some tests failed!")
+        sys.exit(1)

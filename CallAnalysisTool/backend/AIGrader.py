@@ -19,7 +19,7 @@ import ollama
 # Output AI's grade for the given transcription based on given questions
 def ai_grade_transcript(transcript_text, questions_dict):
     # Prompt for the AI
-    # Note: asking for a JSON submission is more reliable than plain text because the model is familiar with the format
+    # NOTE: asking for a JSON submission is more reliable than plain text because the model is familiar with the format
     # Therefore, we are more likely to receive coherent grades in JSON format rather than a paragraph
     prompt = f"""
     You are a 911 call quality assurance analyst. Analyze this transcript and grade it based on the questions below.
@@ -74,6 +74,7 @@ def main():
     KEY = {
         "1": "Asked Correctly",
         "2": "Not Asked",
+        "3": "Asked Incorrectly",
         "4": "Not As Scripted", 
         "5": "N/A"
     }
@@ -92,8 +93,8 @@ def main():
     # Print results
     print("=== AI Grading Results ===")
     for qid, question in questions.items():
-        code = grades.get(qid, "2")  # Default to "Not Asked"
-        meaning = KEY.get(code, "Unknown")
+        code = grades.get(qid, "2")  # Default to "Not Asked" if qid is unrecognized
+        meaning = KEY.get(code, "Unknown") # Default to unknown if code is unrecognized
         print(f"{qid}: {code} ({meaning}) - {question}")
 
 if __name__ == "__main__":

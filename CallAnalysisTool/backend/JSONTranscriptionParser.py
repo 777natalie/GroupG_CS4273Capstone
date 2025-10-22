@@ -66,6 +66,7 @@ def json_to_text(file_path):
     # Return fully parsed transcript as a string
     return text_output
 
+# Main method
 def main():
     # Check if a file was provided as argument
     if len(sys.argv) != 2:
