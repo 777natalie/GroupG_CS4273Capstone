@@ -281,17 +281,22 @@ python CallAnalysisTool/backend/test_case.py \
 ### unit-testing
 
 What it shows
-- Simple test harness you wrote for quick validation.
+- Simple non‑AI test harness for Case Entry (Q1 → 2a) over a sample transcript.
 
 Commands
 ```bash
-git checkout unit-testing
 cd unitTests
-python3 test_case.py transcript_call.txt
+python3 test_case.py transcript_call.txt --show-evidence
+```
+
+Optional (use custom config files)
+```bash
+cd unitTests
+python3 test_case.py transcript_call.txt --labels rubric.json --synonyms synonyms.json --show-evidence
 ```
 
 Expected
-- Prints asked/missed and a score for the provided transcript.
+- Prints asked/missed codes and short evidence snippets for the provided transcript.
 
 ---
 
