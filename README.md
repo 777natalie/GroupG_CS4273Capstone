@@ -1,32 +1,32 @@
 # EMS Call Analysis Tool
 ## GroupG_CS4273Capstone
 
---- 
+---
 
 ## Project Overview
 
 This project supports the Norman Police Department by reviewing EMS call transcripts to ensure dispatchers ask the correct protocol questions. It can be used for quality assurance, training, and improving call consistency.
 
-The work builds on a previous Capstone project that used outside APIs, but our team moved to a fully local system to keep sensitive data secure and compliant. Transcripts are processed through a backend that checks them against dispatcher protocols, displaying the results on a simple web interface.
+We were provided with an Excel sheet containing the grading criteria that NPD currently uses, and our non‑AI grading approach is based directly on those rules. Transcripts are parsed and checked against this grading sheet to produce consistent, repeatable scoring.
 
-The system uses:
-- A **local LLM (Ollama)** for natural language understanding and querying,
-- A **semantic search vector index** (FAISS) for fast protocol question retrieval,
-- A **FastAPI backend** to process transcripts,
-- A **React frontend** to upload transcripts and display analysis results.
+The focus for now is on a rule‑based implementation to match dispatcher questions with required prompts. Once this foundation is stable, AI‑based grading will be layered on in a later sprint. The repository now includes a dedicated parser module and aligned API endpoints to support both the non‑AI and AI graders.
 
 ---
 
 ## Table of Contents
 
-- [Project Structure](#project-structure)  
-- [Setup Instructions](#setup-instructions)  
-  - [Technologies Used](#technologies-used)  
-  - [Backend Setup](#backend-setup)  
+- [Project Structure](#project-structure)
+- [Setup Instructions](#setup-instructions)
+  - [Technologies Used](#technologies-used)
+  - [Backend Setup](#backend-setup)
   - [Frontend Setup](#frontend-setup)
 - [Key Feature](#key-feature)
-- [Usage](#usage)  
-- [How it Works](#how-it-works)  
+- [Usage](#usage)
+- [How it Works](#how-it-works)
+- [Branches & Modules](#branches--modules)
+- [API Endpoints](#api-endpoints)
+- [Testing](#testing)
+- [Branch-Specific Demos](#branch-specific-demos)
 - [Notes](#notes)
 - [Team Contributions](#team-contributions)
 - [Progress Plan](#progress-plan)
@@ -34,157 +34,319 @@ The system uses:
 ---
 
 ## Project Structure
-   ```bash
-/project-root
-│
-├── backend/                       # Backend API and analysis logic (Python)
-│   ├── data/                     # Data and index storage
-│   │   ├── EMS-Calltaking-QA.csv  # EMS Protocol CSV file with questions and protocols
-│   │   └── db_indexing/           # FAISS vector index files (persisted search index)
-│   │       ├── default_vector_store.json
-│   │       ├── docstore.json
-│   │       ├── graph_store.json
-│   │       ├── image_vector_store.json
-│   │       └── index_store.json
-│   │
-│   ├── schema/                   # Pydantic models for structured API responses
-│   │   └── models.py             # Defines the data schema for NatureCode and Questions in analysis
-│   │
-│   ├── EMS_CallAnalyzer.py       # Main analyzer class: Loads data, indexes it, queries FAISS, and calls LLM
-│   ├── local_llm.py              # Wrapper to run Ollama local LLM model via CLI calls
-│   ├── api.py                   # FastAPI app with endpoints to accept transcript and return analysis
-│   └── requirements.txt          # Python dependencies list for the backend
-│
-└── frontend/                     # React frontend UI
-    ├── public/
-    │   └── index.html            # Main HTML page hosting the React app
-    │
-    ├── src/
-    │   ├── components/           # React components for UI
-    │   │   ├── TranscriptUploader.jsx  # Uploads transcript files, submits to backend
-    │   │   └── AnalysisResult.jsx       # Displays the analysis results returned from backend
-    │   │
-    │   ├── App.jsx               # Main React app component that renders uploader and result
-    │   ├── index.js              # Entry point for React app, renders App to DOM
-    │   └── api.js                # API helper for calling backend /analyze endpoint
-    │
-    ├── package.json              # Node package config with dependencies and scripts
-    ├── package-lock.json         # Dependency lockfile
-    └── README.md                 # Frontend README
 
+Consolidated view of the current code layout. Some folders live on feature branches and merge into `main`.
+
+```bash
+/CallAnalysisTool
+│
+├── backend/                         # Backend API and grading logic (Python/FastAPI)
+│   ├── data/
+│   │   └── EMS-Calltaking-QA.csv    # EMS protocol questions (source of truth for non-AI)
+│   ├── schema/
+│   │   └── models.py                # API models (legacy) / shared schemas
+│   ├── app/
+│   │   ├── grade_rule/              # Non-AI rule-based grading module
+│   │   ├── grade_llm/               # AI grading module (local LLM via Ollama + embeddings)
+│   │   ├── schemas/                 # Pydantic models for CallRecord and GraderResponse
+│   │   └── main.py                  # FastAPI app entry (mounts /grade/rule and /grade/llm)
+│   ├── EMS_CallAnalyzer.py          # Legacy non-AI analyzer (S1 baseline)
+│   ├── api.py                       # Legacy API (/analyze) — maintained for backward compatibility
+│   └── requirements.txt             # Backend dependencies
+│
+├── parser/                          # Transcript normalization into CallRecord schema
+│   ├── normalize.py
+│   ├── call_record_schema.py
+│   ├── speakers.py
+│   └── utils.py
+│
+├── tests/                           # Test suites (parser, rule grader, endpoints, llm smoke)
+│   ├── parser/
+│   ├── rule_grader/
+│   ├── endpoints/
+│   └── llm_grader/
+│
+└── frontend/                        # React/Next (Vite-compatible) frontend UI
+    ├── src/
+    │   ├── components/
+    │   │   ├── TranscriptUploader.jsx
+    │   │   └── AnalysisResult.jsx
+    │   ├── pages/                   # Next.js pages (if applicable) or Vite routes
+    │   ├── App.jsx
+    │   ├── index.js
+    │   └── api.js                   # API helper
+    └── package.json
 ```
 
+---
 
 ## Setup Instructions
 
 ### Technologies Used
 
-- Python 3.9+ – backend services and transcript processing
-- Node.js 16+ and npm/yarn – package management and frontend tooling
-- React – frontend web interface for uploading transcripts and viewing results
-- Vite - react framework to handle page routing 
-- Ollama – local LLM for transcript analysis
-- FAISS – semantic search index for fast retrieval of protocol questions
-- FastAPI – backend framework for handling API requests
+* `Python 3.9+` – backend services and transcript processing
+* `Node.js 16+` and npm/yarn – frontend tooling
+* `React` – frontend web interface
+* `Vite` or `Next.js` – frontend framework for dev server/routing
+* `FastAPI` – backend framework for API handling
+* `CSV protocols` – EMS protocol data reference
+* `EMS Protocol CSV file (Police-Fire-EMS-Calltaking-QA-Forms)` – reference material for dispatcher protocols
+* Optional: `Ollama + FAISS` for local AI grading (no cloud usage)
 
-EMS Protocol CSV file (EMS-Calltaking-QA.csv) – reference material for dispatcher protocols
 ---
 
 ### Backend Setup
 
-1. Navigate to the backend folder:
-   ```bash
-   cd backend
-2. (Optional) Create and activate a Python virtual environment:
-   ```bash
-   python -m venv venv  
-   source venv/bin/activate   # Linux/macOS  
-   .\venv\Scripts\activate    # Windows
-3. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt  
-4. Make sure Ollama is installed and configured, then set your model in `local_llm.py`.
-5. Run the FastAPI server:
-   ```bash
-   uvicorn api:app --reload
+```bash
+cd backend
+python -m venv venv
+# Linux/macOS:
+source venv/bin/activate
+# Windows:
+.\venv\Scripts\activate
+pip install -r requirements.txt
+# New endpoints
+uvicorn app.main:app --reload
+# If using the legacy baseline (S1)
+# uvicorn api:app --reload
+```
+
+---
 
 ### Frontend Setup
 
-1. Navigate to the frontend folder:
-   ```bash
-   cd frontend  
-2. Install dependencies:
-   ```bash
-   npm install  
-   # or  
-   yarn install
-3. Start the React development server:
-   ```bash
-   npm start  
-   # or  
-   yarn start
-   ```
-4. Open your browser at `http://localhost:3000`
+```bash
+cd frontend
+npm install
+# or
+yarn install
+
+# Vite
+npm start
+# or Next.js
+npm run dev
+# open http://localhost:3000
+```
+
+---
 
 ## Key Feature
+
 ### Protocol Question Coverage Checker
-**Goal**: Given a 911 call transcript and a set of required protocol questions for a selected nature code, the system checks which questions were asked, which were missed, and a simple confidence score for each match using token-overlap
+Given a 911 call transcript and a set of required protocol questions for a selected nature code, the system checks which questions were asked, which were missed, and provides a simple coverage score. The non‑AI grader is deterministic and traceable; the AI grader expands recall for paraphrases.
 
-### Example 
-* Transcript: "911 what's is the address of the emergency? Are there any injuries?"
+**Example**
+- Transcript: “911 what’s the address of the emergency? Are there any injuries?”  
+- Required:  
+  1. “What is the address of the emergency?”  
+  2. “Is anyone injured?”  
+  3. “Are you in a safe location?”  
+- Output: `asked = [1,2]`, `missed = [3]`, `coverage = 0.67`
 
-* Required:
-  * 1. "What is the address of the emergency?"
-    2. "Is anyone injured?"
-    3. "Are there you in a safe location?"
-* Output: `asked = [1,2]`, `missed = [3]`, `coverage = 0.67`
+---
 
 ## Usage
 
-1. Use the React frontend to upload EMS call transcripts.
-2. The frontend sends transcripts to the backend API /analyze.
-3. Backend queries the EMS protocol vector index and runs Ollama LLM locally for analysis.
-4. Analysis results are returned and displayed on the frontend UI.
+1. Upload EMS call transcripts through the frontend.
+2. The frontend calls the backend API.
+3. The backend compares transcripts against the EMS protocol CSV (non‑AI) and/or embeddings (AI).
+4. Results are returned and displayed on the frontend.
+
+---
 
 ## How it Works
 
-* EMS protocol data (CSV) is loaded and indexed with FAISS for semantic search.
-* Transcripts are parsed and queried against this index for relevant questions.
-* A local LLM (Ollama) processes the transcript and indexed data to determine protocol adherence.
-* Responses follow the structured schema defined in models.py for consistent frontend display.
+* The Excel grading sheet provided by NPD is loaded as the reference for grading criteria (non‑AI).
+* Parser: transcripts from Group B’s pipeline are normalized into a CallRecord schema (speaker tags, timestamps, confidence, audio quality).
+* Rule‑based grader: token/intent patterns detect whether each protocol question was asked.
+* AI grader: local LLM + embeddings (FAISS) improves paraphrase/intent detection; both graders share the same output schema.
+* Frontend: displays asked/missed, rationales, and basic coverage/score.
 
-## Notes 
+---
 
-* Ollama provides a HIPAA-friendly, local LLM inference environment, no cloud dependency.
-* The semantic vector index improves retrieval performance and relevance.
-* This modular approach allows easy upgrades to the backend LLM or frontend UI independently.
-  
+## Branches & Modules
+
+- **main** — stable trunk and project README; consolidates modules as they land.
+- **transcript-parsing** — parser and schema for CallRecord; tests for normalization.
+- **ai-model** — AI grading via Ollama + embeddings/FAISS; tests and configs for local inference.
+- **unit-testing** — shared test harness and fixtures (parser, rule grader, endpoint contract, AI smoke).
+
+Feature branches are merged into `main` via PRs as they stabilize.
+
+---
+
+## API Endpoints
+
+- Legacy (S1)  
+  - `POST /analyze` → asked/missed/coverage based on CSV rules.
+
+- Current (S2)  
+  - `POST /grade/rule` → non‑AI grading (deterministic, CSV‑driven).  
+  - `POST /grade/llm`  → AI grading (local model; same response shape as `/grade/rule`).
+
+---
+
+## Testing
+
+```bash
+# Parser tests
+pytest -q tests/parser
+
+# Rule grader tests
+pytest -q tests/rule_grader
+
+# Endpoint contract tests (FastAPI running)
+pytest -q tests/endpoints
+
+# AI grader smoke/contract (if Ollama configured)
+pytest -q tests/llm_grader -k "smoke or contract"
+```
+
+Focus areas: parser normalization edge cases, synonyms/reordering tolerance in the rule‑based grader, response contract shape, and LLM smoke where configured.
+
+---
+
+## Branch-Specific Demos
+
+These steps match the files that exist in each branch snapshot in this repo.
+
+### ai-model
+
+What it shows
+- `CallAnalysisTool/backend/test_case.py` runs a single transcript through the parser → rule grader (and AI if configured).
+- Group B JSON sample and text fixtures are under `tests/sample_data/`.
+
+Run once (dependencies)
+```bash
+cd CallAnalysisTool/backend
+python -m venv venv
+# mac/linux
+source venv/bin/activate
+# windows
+# .\venv\Scripts\activate
+pip install -r requirements.txt
+cd ../..
+```
+
+Quick demo (positive text)
+```bash
+python CallAnalysisTool/backend/test_case.py \
+  --transcript tests/sample_data/transcript_positive.txt \
+  --required tests/sample_data/required_questions.json \
+  --nature "BREATHING_PROBLEMS" \
+  --mode text
+```
+
+Demo with real JSON transcript
+```bash
+python CallAnalysisTool/backend/test_case.py \
+  --transcript "CallAnalysisTool/backend/transcriptions/2025_00015813_Falls_Shattell_transcription.json" \
+  --required tests/sample_data/required_questions.json \
+  --nature "FALLS" \
+  --mode json --pretty
+```
+
+---
+
+### transcript-parsing
+
+What it shows
+- Same single‑case runner at `CallAnalysisTool/backend/test_case.py`.
+- Emphasize normalization into CallRecord: run with text and with Group B JSON.
+
+Commands
+```bash
+# dependencies once (if not already done)
+cd CallAnalysisTool/backend
+python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
+cd ../..
+
+# text fixture
+python CallAnalysisTool/backend/test_case.py \
+  --transcript tests/sample_data/transcript_positive.txt \
+  --required tests/sample_data/required_questions.json \
+  --nature "BREATHING_PROBLEMS" \
+  --mode text
+
+# JSON fixture
+python CallAnalysisTool/backend/test_case.py \
+  --transcript "CallAnalysisTool/backend/transcriptions/2025_00015813_Falls_Shattell_transcription.json" \
+  --required tests/sample_data/required_questions.json \
+  --nature "FALLS" \
+  --mode json --pretty
+```
+
+---
+
+### unit-testing
+
+What it shows
+- Simple test harness you wrote for quick validation.
+
+Commands
+```bash
+git checkout unit-testing
+cd unitTests
+python3 test_case.py transcript_call.txt
+```
+
+Expected
+- Prints asked/missed and a score for the provided transcript.
+
+---
+
+### If imports or paths fail
+
+From the repo root:
+```bash
+# mac/linux
+export PYTHONPATH=.
+# windows powershell
+$env:PYTHONPATH="."
+```
+
+---
+
+## Notes
+
+### Future AI Integration
+- Add a basic AI grading module to test against Norman PD demo data (local only).
+- Expand natural language handling while keeping outputs explainable.
+- Maintain on‑premise, privacy‑aware deployment (no cloud for PHI).
+
+### Privacy
+- Treat all 911 data as sensitive. Redact as needed. Use local inference only.
+
+---
+
 ## Team Contributions
 
-| Name            | Role            | Contact                   |
-| --------------- | --------------- | ------------------------- |
-| Camden Laskie   | Project Manager | camdenlaskie@ou.edu       |
-| Kevin Nguyen    | Sprint Master 1 | kevin.nguyen@ou.edu       |
-| Jaiden Sizemore | Sprint Master 2 | jaiden.m.sizemore-1@ou.edu|
-| Natalie Roman   | Sprint Master 3 | casandra.n.roman-1@ou.edu |
+| Name            | Role                 | Contact                     |
+| --------------- | -------------------- | --------------------------- |
+| Camden Laskie   | Product Owner / UI   | camdenlaskie@ou.edu         |
+| Kevin Nguyen    | SM1 / Rule Grader + Tests | kevin.nguyen@ou.edu    |
+| Jaiden Sizemore | SM2 / Parser + AI    | jaiden.m.sizemore-1@ou.edu  |
+| Natalie Roman   | SM3 / Docs + Protocols/CSV + AI selection | casandra.n.roman-1@ou.edu |
+
+---
 
 ## Progress Plan
 
 * September:
   * Have all members submit the proper documents for participation in the project.
   * Acquire grading guidelines.
-  * Determine what needs to finished on frontend
-  * Layout project structure in GitHub.
+  * Determine what needs to be finished on the frontend.
+  * Lay out project structure in GitHub.
 
 * October:
   * Identify and develop best method of integrating AI into the grading process.
-  * Develop AI grading process and connect with group B to handle transcription and grading simoultaneously
+  * Develop AI grading process and connect with Group B to handle transcription and grading simultaneously.
   * Build on frontend structure from previous group.
 
 * November:
   * Polish and verify AI grading capabilities.
   * Add finishing touches to frontend (possibly working with group B by this point).
-  * Attach group B's transcription project to our grading project.
+  * Attach Group B's transcription project to our grading project.
   * Ensure there are no errors when combining the projects.
 
 * December:
