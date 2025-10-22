@@ -1,0 +1,32 @@
+{
+  "q1": [
+    "location of the emergency",
+    "address of the emergency",
+    "what is the address"
+  ],
+  "q2": [
+    "phone number",
+    "callback number",
+    "what is your number",
+    "whats your number"
+  ],
+  "city_state": [
+    "norman",
+    "oklahoma",
+    "ok"
+  ],
+  "street_hints": [
+    "street",
+    "st",
+    "avenue",
+    "ave",
+    "road",
+    "rd",
+    "drive",
+    "dr",
+    "lane",
+    "ln",
+    "highway",
+    "hwy"
+  ]
+}
