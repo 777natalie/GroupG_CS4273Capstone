@@ -181,7 +181,6 @@ class TestJSONTranscriptionParser(unittest.TestCase):
 
     # Test whitespace handling
     def test_whitespace_handling(self):
-        """Test that whitespace in text is properly handled"""
         test_data = {
             "segments": [
                 {

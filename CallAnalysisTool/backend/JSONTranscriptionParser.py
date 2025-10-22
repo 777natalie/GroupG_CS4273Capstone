@@ -87,8 +87,8 @@ def main():
     
     return result
 
+# Driver
 if __name__ == "__main__":
-    # Quick way to check output
     result = main()
     if result: 
         print(result)
