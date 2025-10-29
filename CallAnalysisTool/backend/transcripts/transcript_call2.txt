@@ -1,0 +1,7 @@
+[00:00.0–00:05.0] SPEAKER_01: 911, I need help.  
+[00:05.0–00:10.0] SPEAKER_00: What’s the address of the emergency?  
+[00:10.0–00:15.0] SPEAKER_01: 732 Oak Street, Norman, Oklahoma. My dog just bit my neighbor.  
+[00:15.0–00:20.0] SPEAKER_00: Is the person injured badly?  
+[00:20.0–00:25.0] SPEAKER_01: Yes, there’s a bite on their arm, it’s bleeding and looks deep.  
+[00:25.0–00:30.0] SPEAKER_00: Okay, stay calm. Help is on the way. Keep pressure on the wound until EMS arrives.  
+[00:30.0–00:35.0] SPEAKER_01: Okay, I will. I just don’t want them to get worse.  

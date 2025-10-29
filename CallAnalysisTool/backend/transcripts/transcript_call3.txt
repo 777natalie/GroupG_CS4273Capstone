@@ -1,0 +1,8 @@
+[00:00.0–00:05.0] SPEAKER_01: 911, I need help immediately!  
+[00:05.0–00:10.0] SPEAKER_00: What’s the address of the emergency?  
+[00:10.0–00:15.0] SPEAKER_01: 145 Pine Avenue, Norman. My son just spilled boiling water on his arm.  
+[00:15.0–00:20.0] SPEAKER_00: Is he in pain?  
+[00:20.0–00:25.0] SPEAKER_01: Yes, he’s crying and the skin looks red and burned.  
+[00:25.0–00:30.0] SPEAKER_00: Keep him calm and run cool water over the burn while we send help.  
+[00:30.0–00:35.0] SPEAKER_01: Okay, I’ve got water running now. The skin is starting to blister a little.  
+[00:35.0–00:40.0] SPEAKER_00: Don’t apply any creams or ointments. Help is on the way.  

@@ -1,0 +1,8 @@
+
+Filtered relevant NatureCodes (sorted by confidence):
+- Burns (Scalds) / Explosion (Blast)
+   Keywords: burned
+   Confidence: 0.610
+- Case Entry
+   Keywords: emergency, address
+   Confidence: 0.232

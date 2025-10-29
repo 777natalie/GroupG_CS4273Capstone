@@ -1,0 +1,11 @@
+
+Filtered relevant NatureCodes (sorted by confidence):
+- Allergies / Envenomations
+   Keywords: allergic
+   Confidence: 0.503
+- Burns (Scalds) / Explosion (Blast)
+   Keywords: burning
+   Confidence: 0.488
+- Case Entry
+   Keywords: None
+   Confidence: 0.293

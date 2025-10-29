@@ -1,0 +1,8 @@
+
+Filtered relevant NatureCodes (sorted by confidence):
+- Animal Bites/ Attacks
+   Keywords: bite, injured
+   Confidence: 0.665
+- Case Entry
+   Keywords: emergency, address
+   Confidence: 0.308

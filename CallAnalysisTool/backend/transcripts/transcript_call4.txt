@@ -1,0 +1,11 @@
+[00:00.0–00:05.0] SPEAKER_01: 911, I need help, my husband is in trouble.  
+[00:05.0–00:10.0] SPEAKER_00: What’s happening?  
+[00:10.0–00:15.0] SPEAKER_01: He just ate something he’s allergic to—peanuts—and now he’s having trouble breathing.  
+[00:15.0–00:20.0] SPEAKER_00: Is he conscious? Can he talk?  
+[00:20.0–00:25.0] SPEAKER_01: Barely, his lips are swelling, he’s coughing, and he looks pale.  
+[00:25.0–00:30.0] SPEAKER_00: Okay, do you have an EpiPen?  
+[00:30.0–00:35.0] SPEAKER_01: Yes, I just gave him the injection. He’s sweating a lot and still struggling to breathe.  
+[00:35.0–00:40.0] SPEAKER_00: Keep monitoring him. Don’t give him anything to eat or drink. EMS is on the way.  
+[00:40.0–00:45.0] SPEAKER_01: Also, he spilled hot coffee on his arm earlier, it’s red and burning a little.  
+[00:45.0–00:50.0] SPEAKER_00: Alright, cool the burn with water, but the main concern is his allergy and breathing.  
+[00:50.0–00:55.0] SPEAKER_01: Okay, I’m trying to keep him calm until help arrives.  
