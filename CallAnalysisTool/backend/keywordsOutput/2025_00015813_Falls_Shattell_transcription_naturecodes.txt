@@ -1,0 +1,11 @@
+
+Filtered relevant NatureCodes (sorted by confidence):
+- Falls
+   Keywords: brunt, side, fell in, ground, brunt of the fall, up, fall, fell, walking, fall out
+   Confidence: 1.235
+- Sick Person (Specific Diagnosis)
+   Keywords: ambulance, bleeding, blood, vomiting
+   Confidence: 0.712
+- Case Entry
+   Keywords: emergency, address
+   Confidence: 0.366

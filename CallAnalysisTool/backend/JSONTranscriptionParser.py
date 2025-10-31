@@ -64,7 +64,11 @@ def json_to_text(file_path):
         return ""
     
     # Return fully parsed transcript as a string
-    return text_output
+    output_filepath = file_path.replace('.json', '.txt')
+    with open(output_filepath, 'w', encoding='utf-8') as f:
+        f.write(text_output)
+
+    return output_filepath
 
 # Main method
 def main():
@@ -84,7 +88,7 @@ def main():
     
     # Put file through parser and store output in result
     result = json_to_text(filename)
-    
+
     return result
 
 if __name__ == "__main__":
@@ -92,3 +96,4 @@ if __name__ == "__main__":
     result = main()
     if result: 
         print(result)
+

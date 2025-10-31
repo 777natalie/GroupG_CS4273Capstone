@@ -25,7 +25,7 @@ class TestAIGrader(unittest.TestCase):
         [00:00.0–00:05.0] SPEAKER_01: Norman 911, what is the address of the emergency?
         [00:05.0–00:15.0] SPEAKER_00: 123 Main Street in Norman Oklahoma
         [00:15.0–00:20.0] SPEAKER_01: What's the phone number you're calling from?
-        [00:20.0–00:25.0] SPEAKER_00: 405-555-1234
+        [00:20.0–00:25.0] SPEAKER_00: 111-111-1111
         """
 
     # Test successful grading
