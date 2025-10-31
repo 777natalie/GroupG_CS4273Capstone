@@ -4,7 +4,7 @@ Flask-based REST API for grading 911 EMS call transcripts.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Install Dependencies
 
@@ -172,7 +172,7 @@ This endpoint will run both rule-based and AI grading, returning comparison. Cur
 
 ---
 
-## 📊 Grading Code Reference
+## Grading Code Reference
 
 | Code | Meaning             |
 |------|---------------------|
@@ -186,7 +186,7 @@ This endpoint will run both rule-based and AI grading, returning comparison. Cur
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 CallAnalysisTool/backend/
@@ -210,7 +210,7 @@ CallAnalysisTool/backend/
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Rubric & Synonyms
 
@@ -238,7 +238,7 @@ CORS(app, resources={
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Manual Testing
 
@@ -273,7 +273,7 @@ const result = await response.json();
 
 ---
 
-## 🚧 Future Integration
+## Future Integration
 
 ### Adding Jaiden's AI Grader
 
@@ -295,7 +295,7 @@ const result = await response.json();
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Import Errors
 
@@ -336,7 +336,7 @@ If frontend can't connect:
 
 ---
 
-## 👥 Team
+## Team
 
 - **Kevin Nguyen** - Backend API, Rule-Based Grader
 - **Jaiden Sizemore** - AI Grader (integration pending)
@@ -344,13 +344,3 @@ If frontend can't connect:
 - **Camden Laskie** - Frontend Integration
 
 ---
-
-## 📅 Next Steps
-
-1. ✅ Test API locally
-2. ⏳ Share with Camden for frontend integration
-3. ⏳ Get Jaiden's AI grader format
-4. ⏳ Get Natalie's nature code detector format
-5. ⏳ Integrate AI + nature code detection
-6. ⏳ Merge with Group B (Nov 7)
-
