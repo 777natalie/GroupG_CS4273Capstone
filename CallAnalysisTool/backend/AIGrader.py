@@ -1,8 +1,6 @@
 # Jaiden Sizemore
 # CS4273 Group G
-# Last Updated 10/20/2025: Updated comments
-
-# Still work in progress, functionality is limited and only for first 5 questions.
+# Last Updated 11/2/2025: Updated comments
 
 # Requires installation of ollama from ollama.ai
 # Ensure ollama is on your PATH
@@ -16,14 +14,21 @@ from JSONTranscriptionParser import json_to_text
 from detect_naturecode import run_detection
 import ollama
 
+# Function for gathering nature codes and cleaning up file structure afterwards
+
+# Input: path to a transcript, transcript text
+# Output: nature codes
 def detect_nature_codes_in_memory(transcript_path, transcript_text):
-    """Wrapper that returns nature codes directly"""
     temp_path = run_detection(transcript_path, transcript_text)
     with open(temp_path, 'r') as f:
         nature_codes = f.read()
     os.remove(temp_path)
     return nature_codes
 
+# Function for extracting nature codes and sorting by confidence
+
+# Input: nature codes text
+# Output: array of nature code from most to least confident
 def extract_all_nature_codes(text):
     nature_codes = []
     lines = text.strip().split('\n')
@@ -45,8 +50,11 @@ def extract_all_nature_codes(text):
     nature_codes.sort(key=lambda x: x[1], reverse=True)
     return nature_codes
 
+# Function for loading specific nature code questions
+
+# Input: desired nature code
+# Output: dict of questions from given nature code
 def load_nature_code_questions(nature_code):
-    # Load questions for a specific Nature Code from EMSQA.csv
     try:
         df = pd.read_csv("data/EMSQA.csv")
         nature_questions = df[df['NatureCode'] == nature_code]
@@ -56,7 +64,7 @@ def load_nature_code_questions(nature_code):
             qid = str(row['Question_ID'])
             question_text = row['Question_Text']
             if pd.notna(question_text):
-                # Add prefix based on nature code
+                # Add prefix based on nature code for easy separation in output
                 if nature_code == "Case Entry":
                     prefixed_qid = f"CE_{qid}"
                 else:
@@ -64,6 +72,8 @@ def load_nature_code_questions(nature_code):
                 questions_dict[prefixed_qid] = question_text
             
         return questions_dict
+    
+    # Error handling
     except FileNotFoundError:
         print(f"Error: EMSQA.csv file not found in data/ directory")
         return {}
@@ -71,6 +81,10 @@ def load_nature_code_questions(nature_code):
         print(f"Error loading questions for Nature Code {nature_code}: {e}")
         return {}
 
+# Function for calculating final grade
+
+# Input: grades from AI and list of questions
+# Output: final percentage grade
 def calculate_final_grade(grades, questions_dict):
     """
     Calculate final percentage grade based on the grading scheme.
@@ -213,6 +227,7 @@ def main():
         print(f"Error: Could not load transcript")
         sys.exit(1)
 
+    # Get nature codes
     nature_codes_text = detect_nature_codes_in_memory(sys.argv[1], transcript)
     if not nature_codes_text:
         print(f"Error: Could not determine nature codes")
@@ -220,11 +235,14 @@ def main():
 
     nature_codes = extract_all_nature_codes(nature_codes_text)
 
+    # Grade based on nature code with highest confidence
     primary_nature_code = nature_codes[0][0]
 
+    # Load questions for case entry and primary nature code
     case_entry_questions = load_nature_code_questions("Case Entry")
     nature_code_questions = load_nature_code_questions(primary_nature_code)
 
+    # Combine into one dict of questions
     questions = {**case_entry_questions, **nature_code_questions}
     if not questions:
         print(f"Error: Could not determine questions")
@@ -254,6 +272,7 @@ def main():
     print(f"\n=== Final Grade ===")
     print(f"Score: {final_percentage:.1f}%")
 
+    # Return final percentage for frontend display
     return final_percentage
 
 # Driver
