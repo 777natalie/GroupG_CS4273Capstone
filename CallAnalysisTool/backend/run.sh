@@ -1,7 +1,7 @@
 #!/bin/bash
 # Quick start script for the backend API
 
-echo "🚀 Starting EMS Call Analysis API..."
+echo "Starting EMS Call Analysis API..."
 echo ""
 
 # Check if venv exists

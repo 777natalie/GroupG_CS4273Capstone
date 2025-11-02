@@ -1,19 +1,34 @@
 # Backend API - EMS Call Analysis Tool
 
-Flask-based REST API for grading 911 EMS call transcripts.
+Flask-based REST API for grading 911 EMS call transcripts using AI.
 
 ---
 
 ## Quick Start
 
-### 1. Install Dependencies
+### 1. Prerequisites
+
+**Install Ollama** (required for AI grading):
+```bash
+# Visit https://ollama.ai to install Ollama
+# Or on macOS:
+brew install ollama
+
+# Download the llama3.1:8b model
+ollama pull llama3.1:8b
+
+# Start Ollama server (in a separate terminal)
+ollama serve
+```
+
+### 2. Install Dependencies
 
 ```bash
 cd CallAnalysisTool/backend
 pip install -r requirements.txt
 ```
 
-### 2. Run the Server
+### 3. Run the Server
 
 ```bash
 python api/app.py
@@ -21,13 +36,13 @@ python api/app.py
 
 Server will start on: **http://localhost:5001**
 
-### 3. Test the API
+### 4. Test the API
 
 ```bash
 # Health check
 curl http://localhost:5001/api/health
 
-# Grade a transcript
+# Grade a transcript (AI grading)
 curl -X POST http://localhost:5001/api/grade \
   -H "Content-Type: application/json" \
   -d @tests/test_transcript.json
@@ -59,12 +74,14 @@ GET /api/health
 
 ---
 
-### Grade Transcript (Rule-Based)
+### Grade Transcript (AI - Default)
 
 ```http
 POST /api/grade
-POST /api/grade/rule  (alias)
+POST /api/grade/ai  (alias)
 ```
+
+**Uses:** Jaiden's AI grader with Ollama (llama3.1:8b model)
 
 **Request Body** (Group B's JSON format):
 ```json
@@ -97,7 +114,7 @@ POST /api/grade/rule  (alias)
 **Response:**
 ```json
 {
-  "grader_type": "rule_based",
+  "grader_type": "ai",
   "timestamp": "2025-10-31T12:34:56Z",
   "grades": {
     "1": {
@@ -129,26 +146,37 @@ POST /api/grade/rule  (alias)
   "metadata": {
     "language": "en",
     "segment_count": 5,
-    "grader_version": "1.0.0"
+    "grader_version": "1.0.0",
+    "model": "llama3.1:8b"
   }
+}
+```
+
+**Error Response** (if Ollama not running):
+```json
+{
+  "error": "Ollama connection failed",
+  "message": "Please ensure Ollama is installed and running (ollama serve)",
+  "details": "..."
 }
 ```
 
 ---
 
-### Grade Transcript (AI) - Coming Soon
+### Grade Transcript (Rule-Based)
 
 ```http
-POST /api/grade/ai
+POST /api/grade/rule
 ```
 
-**Status:** `501 Not Implemented`
+**Uses:** Kevin's original pattern-matching grader (kept for backward compatibility)
 
-This endpoint will integrate Jaiden's AI grader. Currently returns:
+**Response:**
 ```json
 {
-  "error": "AI grading not yet implemented",
-  "status": "coming_soon"
+  "grader_type": "rule_based",
+  "timestamp": "2025-10-31T12:34:56Z",
+  "grades": { ... }
 }
 ```
 

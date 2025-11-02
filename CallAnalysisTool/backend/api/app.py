@@ -40,11 +40,11 @@ if __name__ == '__main__':
     # Only print banner once (not during reloader restart)
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         print("=" * 60)
-        print("🚀 EMS Call Analysis API Server")
+        print("EMS Call Analysis API Server")
         print("=" * 60)
-        print("📍 Running on: http://localhost:5001")
-        print("💚 Health check: http://localhost:5001/api/health")
-        print("📊 Grade endpoint: http://localhost:5001/api/grade")
+        print("Running on: http://localhost:5001")
+        print("Health check: http://localhost:5001/api/health")
+        print("Grade endpoint: http://localhost:5001/api/grade")
         print("=" * 60)
     
     app.run(host='0.0.0.0', port=5001, debug=True)
