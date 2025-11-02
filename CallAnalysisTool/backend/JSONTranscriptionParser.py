@@ -62,13 +62,8 @@ def json_to_text(file_path):
         # Incorrect structure
         print("Error: JSON file does not contain 'segments' array or has unexpected structure.")
         return ""
-    
-    # Return fully parsed transcript as a string
-    output_filepath = file_path.replace('.json', '.txt')
-    with open(output_filepath, 'w', encoding='utf-8') as f:
-        f.write(text_output)
 
-    return output_filepath
+    return text_output
 
 # Main method
 def main():

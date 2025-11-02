@@ -44,11 +44,7 @@ HIGH_PRIORITY_CODES = {
     "Cardiac or Respiratory Arrest / Death"
 }
 
-def run_detection(transcript_path, output_folder="keywordsOutput"):
-    # Read the transcript
-    with open(transcript_path, "r") as f:
-        transcript_text = f.read().strip()
-
+def run_detection(transcript_path, transcript_text, output_folder="keywordsOutput"):
     # Split transcript into individual lines/segments
     segment_texts = [line.strip() for line in transcript_text.split("\n") if line.strip()]
     transcript_lower = transcript_text.lower()
@@ -110,7 +106,7 @@ def run_detection(transcript_path, output_folder="keywordsOutput"):
     # Step 5: Save output 
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-    transcript_name = os.path.basename(transcript_path).replace(".txt", "")
+    transcript_name = os.path.basename(transcript_path).replace(".json", "")
     log_filename = os.path.join(output_folder, f"{transcript_name}_naturecodes.txt")
 
     with open(log_filename, "w") as log_file:

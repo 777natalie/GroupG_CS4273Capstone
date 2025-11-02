@@ -11,9 +11,18 @@
 
 import sys
 import pandas as pd
+import os
 from JSONTranscriptionParser import json_to_text
 from detect_naturecode import run_detection
 import ollama
+
+def detect_nature_codes_in_memory(transcript_path, transcript_text):
+    """Wrapper that returns nature codes directly"""
+    temp_path = run_detection(transcript_path, transcript_text)
+    with open(temp_path, 'r') as f:
+        nature_codes = f.read()
+    os.remove(temp_path)
+    return nature_codes
 
 def extract_all_nature_codes(text):
     nature_codes = []
@@ -40,16 +49,19 @@ def load_nature_code_questions(nature_code):
     # Load questions for a specific Nature Code from EMSQA.csv
     try:
         df = pd.read_csv("data/EMSQA.csv")
-        # Filter questions for the specific Nature Code
         nature_questions = df[df['NatureCode'] == nature_code]
         
-        # Create questions dictionary with Question_ID as key and Question_Text as value
         questions_dict = {}
         for _, row in nature_questions.iterrows():
-            qid = str(row['Question_ID'])  # Ensure string type for consistency
+            qid = str(row['Question_ID'])
             question_text = row['Question_Text']
-            if pd.notna(question_text):  # Only add if question text is not NaN
-                questions_dict[qid] = question_text
+            if pd.notna(question_text):
+                # Add prefix based on nature code
+                if nature_code == "Case Entry":
+                    prefixed_qid = f"CE_{qid}"
+                else:
+                    prefixed_qid = f"NC_{qid}"
+                questions_dict[prefixed_qid] = question_text
             
         return questions_dict
     except FileNotFoundError:
@@ -58,6 +70,61 @@ def load_nature_code_questions(nature_code):
     except Exception as e:
         print(f"Error loading questions for Nature Code {nature_code}: {e}")
         return {}
+
+def calculate_final_grade(grades, questions_dict):
+    """
+    Calculate final percentage grade based on the grading scheme.
+    
+    Grading Key:
+    1 = Asked Correctly (100%)
+    2 = Not Asked (0%)
+    3 = Asked Incorrectly (0%)
+    4 = Not As Scripted (50% - partial credit)
+    5 = N/A (exclude from calculation)
+    6 = Obvious (100% - full credit)
+    RC = Recorded Correctly (exclude from calculation)
+    """
+    
+    total_points = 0
+    earned_points = 0
+    graded_questions = 0
+    
+    for qid, grade in grades.items():
+        if qid not in questions_dict:
+            continue
+            
+        # Skip questions that don't affect the numerical grade
+        if grade == "5" or grade == "RC":
+            continue
+            
+        graded_questions += 1
+        
+        if grade == "1":  # Asked Correctly
+            earned_points += 1
+            total_points += 1
+        elif grade == "2":  # Not Asked
+            total_points += 1
+            # earned_points += 0 (implicit)
+        elif grade == "3":  # Asked Incorrectly
+            total_points += 1
+            # earned_points += 0 (implicit)
+        elif grade == "4":  # Not As Scripted
+            earned_points += 0.5  # Partial credit
+            total_points += 1
+        elif grade == "6":  # Obvious
+            earned_points += 1
+            total_points += 1
+        else:
+            # Unknown grade code - treat as not asked
+            total_points += 1
+            # earned_points += 0 (implicit)
+    
+    if total_points == 0:
+        return 0.0
+    
+    final_percentage = (earned_points / total_points) * 100
+
+    return final_percentage
 
 # Function for grading a transcript using ollama's AI
 
@@ -76,10 +143,10 @@ def ai_grade_transcript(transcript_text, questions_dict, nature_code):
     TRANSCRIPT:
     {transcript_text}
     
-    GRADING QUESTIONS (use codes: 1=Asked Correctly, 2=Not Asked, 4=Not As Scripted, 5=N/A):
+    GRADING QUESTIONS (use codes: 1=Asked Correctly, 2=Not Asked, 3=Asked Incorrectly, 4=Not As Scripted, 5=N/A, 6=Obvious, RC=Recorded Correctly):
     {chr(10).join([f"{qid}: {question}" for qid, question in questions_dict.items()])}
     
-    Return ONLY a JSON object with this format:
+    Return ONLY a JSON object with this format, this is just an example format, add as many entries as necessary for grading the given questions:
     {{
         "1": "1",
         "1a": "1", 
@@ -91,11 +158,16 @@ def ai_grade_transcript(transcript_text, questions_dict, nature_code):
     Note that the left hand side is for the question ID and the right hand side is for the grade.  Add as many entries as needed to satisfy the required grading.
 
     Important grading guidelines:
-    - Use code "1" only if the question was asked exactly as scripted
+    - Use code "1" only if the question was asked exactly as scripted with correct wording
     - Use code "2" if the question was not asked at all
-    - Use code "4" if the question was asked but with different wording
-    - Use code "5" only for questions that are clearly not applicable to this specific call
-    - Be very strict in your assessment, it is important that questions are asked exactly as stated in the guidelines.
+    - Use code "3" if the question was asked but with incorrect or misleading information that could impact patient care
+    - Use code "4" if the question was asked with different wording but still captured the essential information correctly
+    - Use code "5" only for questions that are clearly not applicable to this specific call scenario
+    - Use code "6" when the information was provided voluntarily by the caller without needing to ask the question
+    - Use code "RC" for administrative questions that were recorded correctly in the system
+    - Be strict in your assessment as repeating the exact question is important for most cases with relatively few exceptions
+    - For code "6" (Obvious), ensure the information was clearly stated by the caller without prompting (Compare exact question wording to call before determining if
+      obvious is an appropriate grade, grading is meant to be strict so obvious should only be used when the question has been BEYOND A DOUBT obviously answered)
     """
     
     try:
@@ -125,7 +197,9 @@ def main():
         "2": "Not Asked",
         "3": "Asked Incorrectly",
         "4": "Not As Scripted", 
-        "5": "N/A"
+        "5": "N/A",
+        "6": "Obvious",
+        "RC": "Recorded Correctly"
     }
     
     # Check if file was provided as an argument
@@ -139,34 +213,48 @@ def main():
         print(f"Error: Could not load transcript")
         sys.exit(1)
 
-    nature_codes_path = run_detection(transcript)
-    if not nature_codes_path:
+    nature_codes_text = detect_nature_codes_in_memory(sys.argv[1], transcript)
+    if not nature_codes_text:
         print(f"Error: Could not determine nature codes")
         sys.exit(1)
 
-    with open(nature_codes_path, "r") as codefile:
-        nature_code_txt = codefile.read()
-
-    nature_codes = extract_all_nature_codes(nature_code_txt)
+    nature_codes = extract_all_nature_codes(nature_codes_text)
 
     primary_nature_code = nature_codes[0][0]
 
-    print(primary_nature_code)
+    case_entry_questions = load_nature_code_questions("Case Entry")
+    nature_code_questions = load_nature_code_questions(primary_nature_code)
 
-    questions = load_nature_code_questions(primary_nature_code)
+    questions = {**case_entry_questions, **nature_code_questions}
     if not questions:
         print(f"Error: Could not determine questions")
         sys.exit(1)
     
     # Get grades from AI
     grades = ai_grade_transcript(transcript, questions, primary_nature_code)
+
+    final_percentage = calculate_final_grade(grades, questions)
     
     # Print results
     print("=== AI Grading Results ===")
-    for qid, question in questions.items():
-        code = grades.get(qid, "2")  # Default to "Not Asked" if qid is unrecognized
-        meaning = KEY.get(code, "Unknown") # Default to unknown if code is unrecognized
-        print(f"{qid}: {code} ({meaning}) - {question}")
+    print("--- Case Entry Questions ---")
+    for qid, question in case_entry_questions.items():
+        code = grades.get(qid, "2")
+        meaning = KEY.get(code, "Unknown")
+        display_qid = qid.replace("CE_", "")
+        print(f"{display_qid}: {code} ({meaning}) - {question}")
+    
+    print(f"\n--- {primary_nature_code} Questions ---")
+    for qid, question in nature_code_questions.items():
+        code = grades.get(qid, "2")
+        meaning = KEY.get(code, "Unknown")
+        display_qid = qid.replace("NC_", "")
+        print(f"{display_qid}: {code} ({meaning}) - {question}")
+
+    print(f"\n=== Final Grade ===")
+    print(f"Score: {final_percentage:.1f}%")
+
+    return final_percentage
 
 # Driver
 if __name__ == "__main__":
