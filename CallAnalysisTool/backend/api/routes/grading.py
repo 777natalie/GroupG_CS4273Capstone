@@ -58,20 +58,25 @@ def grade_transcript():
         # Check if evidence should be included (not used by AI, but kept for API compatibility)
         show_evidence = request.args.get('show_evidence', 'false').lower() == 'true'
         
-        # Load Case Entry questions from EMSQA.csv
-        questions = question_loader.load_case_entry_questions()
+        # Initialize AI grader (questions now loaded dynamically based on nature codes)
+        ai_grader = AIGraderService()
         
-        # Initialize AI grader with loaded questions
-        ai_grader = AIGraderService(questions=questions)
-        
-        # Grade the transcript using AI
-        grades = ai_grader.grade_transcript(transcript_data, show_evidence=show_evidence)
+        # Grade the transcript using AI with nature code detection
+        # Returns: (grades, primary_nature_code, all_questions)
+        grades, primary_nature_code, questions = ai_grader.grade_transcript(
+            transcript_data, 
+            show_evidence=show_evidence
+        )
         
         # Calculate percentage score
-        percentage = ai_grader.calculate_percentage(grades)
+        percentage = ai_grader.calculate_percentage(grades, questions)
         
-        # Count questions
+        # Count questions by type
         total_questions = len(grades)
+        case_entry_count = sum(1 for q_id in grades.keys() if q_id.startswith('CE_'))
+        nature_code_count = sum(1 for q_id in grades.keys() if q_id.startswith('NC_'))
+        
+        # Count correct answers (codes "1" and "6")
         questions_asked_correctly = sum(
             1 for g in grades.values() if g.get('code') in ['1', '6']
         )
@@ -81,7 +86,10 @@ def grade_transcript():
         response = {
             'grader_type': 'ai',
             'grade_percentage': percentage,
+            'detected_nature_code': primary_nature_code,
             'total_questions': total_questions,
+            'case_entry_questions': case_entry_count,
+            'nature_code_questions': nature_code_count,
             'questions_asked_correctly': questions_asked_correctly,
             'questions_missed': questions_missed,
             'timestamp': datetime.utcnow().isoformat() + 'Z',
@@ -89,9 +97,10 @@ def grade_transcript():
             'metadata': {
                 'language': transcript_data.get('language', 'unknown'),
                 'segment_count': len(transcript_data.get('segments', [])),
-                'grader_version': '1.0.0',
+                'grader_version': '2.0.0',
                 'model': 'llama3.1:8b',
-                'questions_source': 'EMSQA.csv (Case Entry)'
+                'questions_source': f'EMSQA.csv (Case Entry + {primary_nature_code})',
+                'nature_code_detection': 'keyword + embedding model'
             }
         }
         
@@ -127,7 +136,7 @@ def grade_transcript():
 def grade_rule_only():
     """
     Explicit rule-based grading endpoint
-    (Uses Kevin's original pattern-matching grader)
+    (Uses pattern-matching grader, kept for backward compatibility)
     """
     try:
         # Get JSON data from request
