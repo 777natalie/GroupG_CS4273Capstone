@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useRef } from "react";
+import { Dispatcher } from "@/types/dispatcher";
+import { v4 as uuidv4 } from "uuid";
 
 const UploadFileContainer = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -7,7 +9,7 @@ const UploadFileContainer = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Define allowed audio file types
-  const allowedTypes = [".wav", ".mp3", ".flac", ".alac", ".mpa"];
+  const allowedTypes = [".zip", ".json"];
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
@@ -69,19 +71,101 @@ const UploadFileContainer = () => {
 
   const handleUpload = () => {
     if (selectedFiles.length === 0) {
-      alert("Please select at least one audio file to upload.");
+      alert("Please select at least one zip and json file to upload.");
       return;
     }
 
-    // Here you would implement the actual upload logic
-    console.log("Uploading files:", selectedFiles);
-    alert(`Ready to upload ${selectedFiles.length} audio file(s)!`);
+    // Group files by dispatcher name
+    const dispatcherMap = new Map<
+      string,
+      { transcriptFiles: File[]; audioFiles: File[] }
+    >();
+
+    selectedFiles.forEach((file) => {
+      const filename = file.name;
+      const firstUnderscoreIndex = filename.indexOf("_");
+      const secondUnderscoreIndex = filename.indexOf(
+        "_",
+        firstUnderscoreIndex + 1
+      );
+      const dotIndex = filename.indexOf(".");
+
+      if (secondUnderscoreIndex !== -1 && dotIndex !== -1) {
+        const dispatcherName = filename.substring(
+          secondUnderscoreIndex + 1,
+          dotIndex
+        );
+        const fileExtension = filename.substring(dotIndex);
+
+        // Initialize dispatcher if not exists
+        if (!dispatcherMap.has(dispatcherName)) {
+          dispatcherMap.set(dispatcherName, {
+            transcriptFiles: [],
+            audioFiles: [],
+          });
+        }
+
+        const dispatcherData = dispatcherMap.get(dispatcherName)!;
+
+        // Categorize files based on extension
+        if (fileExtension === ".json") {
+          dispatcherData.transcriptFiles.push(file);
+        } else {
+          dispatcherData.audioFiles.push(file);
+        }
+      }
+    });
+
+    // Get existing dispatchers from localStorage
+    const storedDispatchers = localStorage.getItem("dispatchers");
+    const existingDispatchers: Dispatcher[] = storedDispatchers
+      ? JSON.parse(storedDispatchers)
+      : [];
+
+    dispatcherMap.forEach((files, dispatcherName) => {
+      // Check if dispatcher already exists
+      const existingDispatcher = existingDispatchers.find(
+        (d) => d.name === dispatcherName
+      );
+
+      if (existingDispatcher) {
+        // Merge new files with existing files
+        existingDispatcher.files.transcriptFiles.push(
+          ...files.transcriptFiles.map((f) => f.name)
+        );
+        existingDispatcher.files.audioFiles.push(
+          ...files.audioFiles.map((f) => f.name)
+        );
+      } else {
+        // Create new dispatcher if it doesn't exist
+        const newDispatcher: Dispatcher = {
+          id: uuidv4(),
+          name: dispatcherName,
+          files: {
+            transcriptFiles: files.transcriptFiles.map((f) => f.name),
+            audioFiles: files.audioFiles.map((f) => f.name),
+          },
+        };
+        existingDispatchers.push(newDispatcher);
+      }
+    });
+
+    // Store updated dispatchers array in localStorage
+    localStorage.setItem("dispatchers", JSON.stringify(existingDispatchers));
+    console.log("Dispatchers stored in localStorage:", existingDispatchers);
+
+    alert("Successfully stored dispatcher(s) with files!");
+
+    // Clear selected files after successful upload
+    setSelectedFiles([]);
   };
 
   return (
     <div className="w-full max-w-2xl mx-auto p-6">
       <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2">Upload Audio Files</h2>
+        <h2 className="text-xl font-semibold mb-2">
+          Upload Zip and JSON Files
+        </h2>
       </div>
 
       {/* Drag and Drop Area */}
@@ -112,11 +196,9 @@ const UploadFileContainer = () => {
             />
           </svg>
           <p className="text-lg font-medium text-gray-700">
-            Drop audio files here, or click to browse
+            Drop zip and json files here, or click to browse
           </p>
-          <p className="text-sm text-gray-500">
-            WAV, MP3, FLAC, ALAC, MPA files only
-          </p>
+          <p className="text-sm text-gray-500">Zip and JSON files only</p>
         </div>
       </div>
 
@@ -125,7 +207,7 @@ const UploadFileContainer = () => {
         ref={fileInputRef}
         type="file"
         multiple
-        accept=".wav,.mp3,.flac,.alac,.mpa"
+        accept=".zip,.json"
         onChange={(e) => handleFileSelect(e.target.files)}
         className="hidden"
       />

@@ -71,30 +71,6 @@ const Navbar = () => {
           </Link>
 
           <Link
-            href="/review"
-            onClick={() => handleClick("Review")}
-            className={`${
-              isHydrated && pageTitle === "Review"
-                ? "text-[#002d62] bg-white"
-                : "text-white"
-            } font-roboto font-bold text-2xl rounded-[10px] px-6 py-3 flex items-center gap-4 w-full`}
-          >
-            <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-              <Image
-                src={
-                  isHydrated && pageTitle === "Review"
-                    ? reviewIconBlack
-                    : reviewIconWhite
-                }
-                alt="review"
-                width={40}
-                height={40}
-              />
-            </div>
-            <span className="flex-1 text-left">Review</span>
-          </Link>
-
-          <Link
             href="/records"
             onClick={() => handleClick("Records")}
             className={`${
