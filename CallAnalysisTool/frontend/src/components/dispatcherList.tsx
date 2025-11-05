@@ -14,12 +14,29 @@ const DispatcherList = () => {
   const [dispatchers, setDispatchers] = useState<Dispatcher[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  useEffect(() => {
-    // Load dispatchers from localStorage
+  // Function to load dispatchers from localStorage
+  const loadDispatchers = () => {
     const storedDispatchers = localStorage.getItem("dispatchers");
     if (storedDispatchers) {
       setDispatchers(JSON.parse(storedDispatchers));
     }
+  };
+
+  useEffect(() => {
+    // Load dispatchers from localStorage on mount
+    loadDispatchers();
+
+    // Listen for custom event when dispatchers are updated
+    const handleDispatchersUpdate = () => {
+      loadDispatchers();
+    };
+
+    window.addEventListener("dispatchersUpdated", handleDispatchersUpdate);
+
+    // Cleanup listener on unmount
+    return () => {
+      window.removeEventListener("dispatchersUpdated", handleDispatchersUpdate);
+    };
   }, []);
 
   // Filter dispatchers based on search query
