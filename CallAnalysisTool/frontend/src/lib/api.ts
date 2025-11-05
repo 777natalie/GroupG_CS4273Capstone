@@ -28,6 +28,11 @@ export interface ApiResponse {
   };
 }
 
+export interface Question {
+  questionId: string;
+  label: string;
+}
+
 /**
  * Upload a JSON file to the API and get analysis results
  */
@@ -79,4 +84,45 @@ export async function uploadFileForAnalysis(file: File): Promise<ApiResponse> {
  */
 export function calculateGrade(response: ApiResponse): number {
   return Math.round(response.grade_percentage ?? 0);
+}
+
+/**
+ * Get questions that were not asked from the API response
+ * Returns an array of objects containing questionId and label for questions that were not asked
+ */
+
+export function getNotAskedQuestions(response: ApiResponse): Question[] {
+  if (!response.grades) {
+    return [];
+  }
+
+  // Convert grades object to array and filter for "Not Asked" questions
+  return Object.entries(response.grades)
+    .filter(
+      ([questionId, grade]) =>
+        grade.status === "Not Asked" || grade.code === "2"
+    )
+    .map(([questionId, grade]) => ({
+      questionId,
+      label: grade.label,
+    }));
+}
+
+//Get Questions that were asked incorrectly from the API response
+export function getQuestionsAskedIncorrectly(
+  response: ApiResponse
+): Question[] {
+  if (!response.grades) {
+    return [];
+  }
+
+  return Object.entries(response.grades)
+    .filter(
+      ([questionId, grade]) =>
+        grade.status === "Asked Incorrectly" || grade.code === "3"
+    )
+    .map(([questionId, grade]) => ({
+      questionId,
+      label: grade.label,
+    }));
 }
