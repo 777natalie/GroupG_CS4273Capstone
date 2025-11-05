@@ -5,6 +5,13 @@ Flask server that provides grading endpoints for 911 call transcripts
 """
 
 import os
+import sys
+from pathlib import Path
+
+# Add the backend directory to Python path so imports work
+backend_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(backend_dir))
+
 from flask import Flask, jsonify
 from flask_cors import CORS
 from api.routes.grading import grading_bp
@@ -17,14 +24,16 @@ def create_app():
     # CORS configuration - allow frontend to connect
     # Supports both Vite (5173) and Next.js (3000) dev servers
     CORS(app, resources={
-        r"/api/*": {
+        r"/*": {  # Allow all routes
             "origins": [
                 "http://localhost:3000",
                 "http://localhost:5173",
                 "http://localhost:5174",
                 "http://127.0.0.1:3000",
                 "http://127.0.0.1:5173"
-            ]
+            ],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"]
         }
     })
     
