@@ -14,22 +14,47 @@ export default function DispatcherDetailPage() {
   useEffect(() => {
     const dispatcherId = params.id as string;
 
-    // Load dispatchers from localStorage
-    const storedDispatchers = localStorage.getItem("dispatchers");
-    if (storedDispatchers) {
-      const dispatchers: Dispatcher[] = JSON.parse(storedDispatchers);
-      const foundDispatcher = dispatchers.find((d) => d.id === dispatcherId);
+    // Function to load dispatcher from localStorage
+    const loadDispatcher = (isInitialLoad: boolean = false) => {
+      if (isInitialLoad) {
+        setLoading(true);
+      }
 
-      if (foundDispatcher) {
-        setDispatcher(foundDispatcher);
+      // Load dispatchers from localStorage
+      const storedDispatchers = localStorage.getItem("dispatchers");
+      if (storedDispatchers) {
+        const dispatchers: Dispatcher[] = JSON.parse(storedDispatchers);
+        const foundDispatcher = dispatchers.find((d) => d.id === dispatcherId);
+
+        if (foundDispatcher) {
+          setDispatcher(foundDispatcher);
+        } else {
+          // Dispatcher not found, redirect back to records
+          router.push("/records");
+        }
       } else {
-        // Dispatcher not found, redirect back to records
         router.push("/records");
       }
-    } else {
-      router.push("/records");
-    }
-    setLoading(false);
+
+      if (isInitialLoad) {
+        setLoading(false);
+      }
+    };
+
+    // Load dispatcher on mount
+    loadDispatcher(true);
+
+    // Listen for custom event when dispatchers are updated
+    const handleDispatchersUpdate = () => {
+      loadDispatcher(false);
+    };
+
+    window.addEventListener("dispatchersUpdated", handleDispatchersUpdate);
+
+    // Cleanup listener on unmount
+    return () => {
+      window.removeEventListener("dispatchersUpdated", handleDispatchersUpdate);
+    };
   }, [params.id, router]);
 
   if (loading) {

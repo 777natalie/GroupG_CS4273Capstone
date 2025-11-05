@@ -46,7 +46,18 @@ const DispatcherDetails = ({ dispatcher }: DispatcherDetailsProps) => {
                     className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-between"
                   >
                     <p className="text-sm font-medium flex-1">{filename}</p>
-                    <span className="text-sm font-semibold text-blue-600 ml-4">
+                    <span
+                      // Green if 90% or above, Yellow if 70-89%, Red if below 70%
+                      className={`text-sm font-semibold ${
+                        Number(dispatcher.grades?.[filename]) > 90
+                          ? `text-green-600`
+                          : `${
+                              Number(dispatcher.grades?.[filename]) > 70
+                                ? `text-yellow-400`
+                                : `text-red-600`
+                            }`
+                      } ml-4`}
+                    >
                       {dispatcher.grades?.[filename]
                         ? `Grade: ${dispatcher.grades[filename]}`
                         : "No Grade"}
