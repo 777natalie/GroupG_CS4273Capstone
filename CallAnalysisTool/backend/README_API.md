@@ -23,14 +23,31 @@ ollama serve
 
 ### 2. Install Dependencies
 
+**Mac/Linux:**
 ```bash
 cd CallAnalysisTool/backend
 pip install -r requirements.txt
 ```
 
+**Windows (PowerShell):**
+```powershell
+cd CallAnalysisTool\backend
+pip install -r requirements.txt
+```
+
 ### 3. Run the Server
 
+**Mac/Linux:**
 ```bash
+cd CallAnalysisTool/backend
+export PYTHONPATH=.
+python api/app.py
+```
+
+**Windows (PowerShell):**
+```powershell
+cd CallAnalysisTool\backend
+$env:PYTHONPATH = "."
 python api/app.py
 ```
 
@@ -55,7 +72,7 @@ Or run the automated test script:
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### Health Check
 
@@ -81,7 +98,7 @@ POST /api/grade
 POST /api/grade/ai  (alias)
 ```
 
-**Uses:** Jaiden's AI grader with Ollama (llama3.1:8b model)
+**Uses:** AI grader with Ollama (llama3.1:8b model)
 
 **Request Body** (Group B's JSON format):
 ```json
@@ -163,38 +180,88 @@ POST /api/grade/ai  (alias)
 
 ---
 
-### Grade Transcript (Rule-Based)
+### Upload and Grade File
 
 ```http
-POST /api/grade/rule
+POST /api/upload
 ```
 
-**Uses:** Kevin's original pattern-matching grader (kept for backward compatibility)
+Upload a `.json` transcript file and get grading results.
+
+**Uses:** AI grader with Ollama (llama3.1:8b model) + nature code detection
+
+**Request:** `multipart/form-data`
+```javascript
+// Frontend example (TypeScript/React)
+const formData = new FormData();
+formData.append('file', jsonFile); // File object from <input type="file">
+
+const response = await fetch('http://localhost:5001/api/upload', {
+  method: 'POST',
+  body: formData
+});
+
+const result = await response.json();
+```
 
 **Response:**
 ```json
 {
-  "grader_type": "rule_based",
-  "timestamp": "2025-10-31T12:34:56Z",
-  "grades": { ... }
+  "filename": "test_transcript.json",
+  "grader_type": "ai",
+  "grade_percentage": 56.2,
+  "detected_nature_code": "Case Entry",
+  "total_questions": 17,
+  "case_entry_questions": 17,
+  "nature_code_questions": 0,
+  "questions_asked_correctly": 4,
+  "questions_missed": 13,
+  "timestamp": "2025-11-05T00:38:08.231106Z",
+  "grades": {
+    "CE_1": {
+      "code": "1",
+      "label": "What's the location of the emergency?",
+      "status": "Asked Correctly"
+    },
+    "CE_2": {
+      "code": "4",
+      "label": "What's the phone number you're calling from?",
+      "status": "Not As Scripted"
+    }
+  },
+  "metadata": {
+    "language": "en",
+    "segment_count": 5,
+    "grader_version": "2.0.0",
+    "model": "llama3.1:8b",
+    "questions_source": "EMSQA.csv (Case Entry + Case Entry)",
+    "nature_code_detection": "keyword + embedding model"
+  }
 }
 ```
 
----
+**Error Responses:**
 
-### Grade Transcript (All Graders) - Coming Soon
-
-```http
-POST /api/grade/all
-```
-
-**Status:** `501 Not Implemented`
-
-This endpoint will run both rule-based and AI grading, returning comparison. Currently returns:
+No file provided:
 ```json
 {
-  "error": "Combined grading not yet implemented",
-  "status": "coming_soon"
+  "error": "No file provided"
+}
+```
+
+Invalid file type:
+```json
+{
+  "error": "Invalid file type",
+  "message": "Only .json files are supported",
+  "allowed_types": [".json"]
+}
+```
+
+Invalid JSON structure:
+```json
+{
+  "error": "Invalid transcript format: missing \"segments\" field"
 }
 ```
 
@@ -218,35 +285,34 @@ This endpoint will run both rule-based and AI grading, returning comparison. Cur
 
 ```
 CallAnalysisTool/backend/
+├── AIGrader.py                  # AI grader (Ollama + llama3.1:8b)
+├── detect_naturecode.py         # Nature code detection
+├── JSONTranscriptionParser.py   # Group B JSON format parser
+├── nature_keywords.json         # Keywords for nature code detection
+├── requirements.txt             # Python dependencies
+├── README_API.md                # This file
+│
 ├── api/
-│   ├── app.py                    # Flask application
+│   ├── app.py                   # Flask application
 │   ├── routes/
 │   │   ├── health.py            # Health check endpoint
-│   │   └── grading.py           # Grading endpoints
-│   ├── services/
-│   │   └── rule_grader.py       # Rule-based grading logic
-│   └── models/
-│       └── schemas.py           # Request/response models (future)
+│   │   └── grading.py           # Grading endpoints (/grade, /upload, /grade/rule)
+│   └── services/
+│       ├── ai_grader.py         # AI grader wrapper for Flask
+│       ├── question_loader.py   # EMSQA.csv loader
+│       └── rule_grader.py       # Rule-based grading (legacy)
 │
-├── tests/
-│   ├── test_transcript.json     # Sample transcript
-│   └── test_manual.sh           # Manual testing script
+├── data/
+│   └── EMSQA.csv                # 296 EMS protocol questions
 │
-├── requirements.txt             # Python dependencies
-└── README_API.md               # This file
+└── tests/
+    ├── test_transcript.json     # Sample transcript
+    └── test_manual.sh           # Manual testing script
 ```
 
 ---
 
 ## Configuration
-
-### Rubric & Synonyms
-
-The grader uses configuration files from `unitTests/`:
-- `rubric.json` - Question labels
-- `synonyms.json` - Phrase matching patterns
-
-These files are automatically loaded when the server starts.
 
 ### CORS
 
@@ -301,28 +367,6 @@ const result = await response.json();
 
 ---
 
-## Future Integration
-
-### Adding Jaiden's AI Grader
-
-1. Import his `AIGrader.py` module
-2. Update `api/services/` to include AI grader wrapper
-3. Implement `/api/grade/ai` endpoint in `api/routes/grading.py`
-
-### Adding Natalie's Nature Code Detector
-
-1. Import her nature code detection module
-2. Call it before grading to determine which questions to check
-3. Update grading logic to use detected nature code
-
-### Adding Database Storage
-
-1. Add SQLAlchemy to `requirements.txt`
-2. Create models in `api/models/`
-3. Store grading results for history page
-
----
-
 ## Troubleshooting
 
 ### Import Errors
@@ -356,19 +400,13 @@ If frontend can't connect:
 
 ---
 
-## 📝 Notes
+## Features
 
-- **Privacy:** All grading is done locally (no external API calls)
-- **Group B Integration:** This API accepts their JSON transcript format
-- **Extensible:** Easy to add AI graders, nature code detection, etc.
-
----
-
-## Team
-
-- **Kevin Nguyen** - Backend API, Rule-Based Grader
-- **Jaiden Sizemore** - AI Grader (integration pending)
-- **Natalie Roman** - Nature Code Detection (integration pending)
-- **Camden Laskie** - Frontend Integration
+- AI-based grading using Ollama (llama3.1:8b)
+- Nature code detection (keyword + text embeddings)
+- Dynamic question loading from EMSQA.csv (296 protocol questions)
+- CORS-enabled for frontend integration
+- Local processing (no external API calls, privacy-compliant)
+- Accepts Group B's JSON transcript format
 
 ---
