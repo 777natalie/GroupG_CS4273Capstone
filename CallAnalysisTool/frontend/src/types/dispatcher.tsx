@@ -1,3 +1,4 @@
+import { Question } from "@/lib/api";
 export interface Dispatcher {
   id: string;
   name: string;
@@ -8,4 +9,6 @@ export interface Dispatcher {
   grades?: {
     [filename: string]: string | number; // Grade for each transcript file
   };
+  notAskedQuestions?: Question[];
+  questionsAskedIncorrectly?: Question[];
 }
