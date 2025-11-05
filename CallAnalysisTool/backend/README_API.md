@@ -18,6 +18,7 @@ brew install ollama
 ollama pull llama3.1:8b
 
 # Start Ollama server (in a separate terminal)
+# If error occurs, Ollama is already running
 ollama serve
 ```
 
@@ -55,17 +56,42 @@ Server will start on: **http://localhost:5001**
 
 ### 4. Test the API
 
+**Note:** Make sure you're in the `backend` directory:
+```bash
+cd CallAnalysisTool/backend
+```
+
+**Mac/Linux:**
 ```bash
 # Health check
 curl http://localhost:5001/api/health
 
-# Grade a transcript (AI grading)
+# Grade a transcript 
 curl -X POST http://localhost:5001/api/grade \
   -H "Content-Type: application/json" \
   -d @tests/test_transcript.json
+
+# Test file upload 
+curl -X POST http://localhost:5001/api/upload \
+  -F "file=@tests/test_transcript.json"
 ```
 
-Or run the automated test script:
+**Windows (PowerShell):**
+```powershell
+# Health check
+curl http://localhost:5001/api/health
+
+# Grade a transcript (AI grading - JSON body)
+curl -X POST http://localhost:5001/api/grade `
+  -H "Content-Type: application/json" `
+  -d "@tests/test_transcript.json"
+
+# Test file upload (what frontend uses)
+curl -X POST http://localhost:5001/api/upload `
+  -F "file=@tests/test_transcript.json"
+```
+
+Or run the automated test script (Mac/Linux only):
 ```bash
 ./tests/test_manual.sh
 ```
@@ -91,7 +117,7 @@ GET /api/health
 
 ---
 
-### Grade Transcript (AI - Default)
+### Grade Transcript 
 
 ```http
 POST /api/grade
@@ -100,7 +126,7 @@ POST /api/grade/ai  (alias)
 
 **Uses:** AI grader with Ollama (llama3.1:8b model)
 
-**Request Body** (Group B's JSON format):
+**Request Body** (JSON):
 ```json
 {
   "language": "en",
@@ -336,24 +362,36 @@ CORS(app, resources={
 
 ### Manual Testing
 
+**Make sure you're in the `backend` directory:**
 ```bash
-# Start the server
+cd CallAnalysisTool/backend
+```
+
+```bash
+# Start the server (in one terminal)
+export PYTHONPATH=.
 python api/app.py
 
-# In another terminal, run tests
+# In another terminal (also in backend directory), run tests
+cd CallAnalysisTool/backend
 ./tests/test_manual.sh
 ```
 
 ### With Postman/Insomnia
 
-1. Import the test transcript: `tests/test_transcript.json`
+1. Import the test transcript: `CallAnalysisTool/backend/tests/test_transcript.json`
 2. POST to `http://localhost:5001/api/grade`
 3. Set `Content-Type: application/json`
 4. Paste transcript in body
 
+**Or test file upload endpoint:**
+1. POST to `http://localhost:5001/api/upload`
+2. Set `Content-Type: multipart/form-data`
+3. Add file field with `tests/test_transcript.json`
+
 ### With Frontend
 
-Update your frontend to call:
+**For JSON body (direct grading):**
 ```javascript
 const response = await fetch('http://localhost:5001/api/grade', {
   method: 'POST',
@@ -361,6 +399,18 @@ const response = await fetch('http://localhost:5001/api/grade', {
     'Content-Type': 'application/json'
   },
   body: JSON.stringify(transcriptData)
+});
+const result = await response.json();
+```
+
+**For file upload (recommended):**
+```javascript
+const formData = new FormData();
+formData.append('file', jsonFile); // File object from <input type="file">
+
+const response = await fetch('http://localhost:5001/api/upload', {
+  method: 'POST',
+  body: formData
 });
 const result = await response.json();
 ```
@@ -382,13 +432,21 @@ export PYTHONPATH=.
 
 ### Port Already in Use
 
-If port 5000 is busy:
+If port 5001 is busy:
 ```bash
-# Kill the process
-lsof -ti:5000 | xargs kill
+# Kill the process (Mac/Linux)
+lsof -ti:5001 | xargs kill
 
 # Or change the port in api/app.py
 app.run(host='0.0.0.0', port=5001, debug=True)
+```
+
+**Windows (PowerShell):**
+```powershell
+# Find process using port 5001
+netstat -ano | findstr :5001
+# Kill using PID from above command
+taskkill /PID <PID> /F
 ```
 
 ### CORS Errors
